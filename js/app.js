@@ -3,11 +3,12 @@ import * as THREE from '../vendor/three.module.min.js';
 import { OrbitControls } from '../vendor/OrbitControls.js';
 import { Store, R, unit, enuBasis, aeqdInv, aeqdFwd } from './tiles.js';
 import { Ephem, validate } from './ephem.js';
-import { earthFrame, earthshine, GLSL_COMMON, EARTH_VERT, EARTH_FRAG, sunDiscCanvas } from './sky.js?v=20261115d';
-import { initMission } from './mission.js?v=20261115d';
-import { initAnalysis } from './analysis.js?v=20261115d';
-// versão dos arquivos JS: o app.html confere, e o ?v= nos imports evita que o navegador use arquivos antigos do cache
-window.LUNITE_BUILD = '20261115d';
+import { earthFrame, earthshine, GLSL_COMMON, EARTH_VERT, EARTH_FRAG, sunDiscCanvas } from './sky.js?v=20261115e';
+import { initMission } from './mission.js?v=20261115e';
+import { initAnalysis } from './analysis.js?v=20261115e';
+import { initInspect } from './inspect.js?v=20261115e';
+// versão dos arquivos JS: o index.html confere, e o ?v= nos imports evita que o navegador use arquivos antigos do cache
+window.LUNITE_BUILD = '20261115e';
 
 const BASE = 'data/';
 const D2R = Math.PI / 180;
@@ -39,7 +40,7 @@ addEventListener('resize', resize);
 const store = new Store(BASE);
 const eph = new Ephem();
 let SITES = [], moonTex = null, earthDay = null, earthNight = null;
-const worker = new Worker(new URL('./worker.js?v=20261115d', import.meta.url), { type: 'module' });
+const worker = new Worker(new URL('./worker.js?v=20261115e', import.meta.url), { type: 'module' });
 
 function msg(text, cls = '') { const el = $('status'); el.textContent = text; el.className = cls; }
 
@@ -539,7 +540,8 @@ async function main() {
   for (const s of SITES) s._label = siteLabel(s);
   wireUI(); dataSummary();
   initMission({ sites: SITES, goSite, home: () => { camAnim = null; state.lat = -60; state.lon = 20; enterGlobe(); }, mode: () => state.mode, goTo: (lat, lon) => enterLocal(lat, lon, 5), pick: pickLatLon, setTime, time: () => state.t });
-  initAnalysis({ THREE, scene: localScene, camera, canvas, eph, setTime, invalidate, base: BASE, sites: SITES, frame: () => ({ lat: state.lat, lon: state.lon, exag: state.exag, mode: state.mode }) });
+  const an = initAnalysis({ THREE, scene: localScene, camera, canvas, eph, setTime, invalidate, base: BASE, sites: SITES, frame: () => ({ lat: state.lat, lon: state.lon, exag: state.exag, mode: state.mode }) });
+  initInspect({ an, canvas, setTime, time: () => state.t, mode: () => state.mode });
   state.lat = -60; state.lon = 20; enterGlobe(); setTime(state.t);
   runValidation();
   msg('Ready. Drag to rotate, scroll to zoom, double-click to open the terrain there, or pick a curated site.');

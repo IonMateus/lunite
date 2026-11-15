@@ -32,11 +32,13 @@ export function initAnalysis(api) {
   const { THREE, scene, camera, canvas, eph } = api;
   // vários workers em paralelo (um por núcleo livre, até 6): cada um calcula uma parte dos pontos
   const NW = +new URLSearchParams(location.search).get('workers') || Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 4) - 1));   // ?workers=N força (testes)
-  const workers = Array.from({ length: NW }, () => new Worker(new URL('./analysis-worker.js?v=20261115d', import.meta.url), { type: 'module' }));
+  const workers = Array.from({ length: NW }, () => new Worker(new URL('./analysis-worker.js?v=20261115e', import.meta.url), { type: 'module' }));
   const sendAll = (msg) => workers.forEach((w) => w.postMessage(msg));
   sendAll({ type: 'init', base: new URL(api.base, location.href).href, sites: api.sites.map((s) => ({ id: s.id, lat: s.lat, lon: s.lon })) });
 
   let metric = 'sun', runId = 0, job = null, timer = 0, lastKey = '';
+  const filt = { on: false, sun: 0, comm: 0 };   // etapa 4: filtragem (pente fino) sobre a janela fixada
+  let marks = {};                                 // marcadores 3D: { sel, fixed, cmp } = índices de candidatos
   const group = new THREE.Group(); group.name = 'analysis'; scene.add(group);
   let bars = null, dots = null, ring = null;
 
@@ -50,7 +52,8 @@ export function initAnalysis(api) {
   }
 
   function start(P) {
-    const id = ++runId; sendAll({ type: 'cancel' }); clear(); clearInterval(pumpTimer); pumpTimer = 0;
+    const id = ++runId; sendAll({ type: 'cancel' }); filt.on = false; marks = {}; $('anFilter').hidden = true;
+    dispatchEvent(new CustomEvent('lunite:analysis-reset')); clear(); clearInterval(pumpTimer); pumpTimer = 0;
     document.body.classList.toggle('analyzing', P.site.mode !== 'none');   // com um alvo, o painel da direita mostra os sítios (CSS: body.analyzing.local)
     window.lunite = window.lunite || {}; window.lunite.analysis = null; window.lunite.window = null;   // nada do cálculo anterior fica valendo
     if (P.site.mode === 'none') { job = null; status('Escolha um local de pouso nos parâmetros da missão.'); return; }
@@ -98,10 +101,11 @@ export function initAnalysis(api) {
       if (!job.pts.length) status(`Analisando… ${lbl}`);
       progress(job.prog.reduce((a, b) => a + b, 0) / NW); return;
     }
+    if (m.type === 'detail') { const cb = detailReq.get(m.req); if (cb) { detailReq.delete(m.req); cb(m); } return; }
     if (m.type === 'ring') { job.ring = m.ring; drawRing(); api.invalidate?.(); return; }
     if (m.type === 'chunk') {
       const a = m.pts;
-      for (let i = 0; i < a.length; i += STRIDE) job.pts[a[i + 10]] = { lat: a[i], lon: a[i + 1], h: a[i + 2], slope: a[i + 3], sunPct: a[i + 4], commPct: a[i + 5], maxDarkH: a[i + 6], maxBlackoutH: a[i + 7], flags: a[i + 8], dist: a[i + 9] };
+      for (let i = 0; i < a.length; i += STRIDE) job.pts[a[i + 10]] = { c: a[i + 10], lat: a[i], lon: a[i + 1], h: a[i + 2], slope: a[i + 3], sunPct: a[i + 4], commPct: a[i + 5], maxDarkH: a[i + 6], maxBlackoutH: a[i + 7], flags: a[i + 8], dist: a[i + 9] };
       job.total = m.counts.total; job.spacing = m.spacing; job.ms = m.ms;
       if (m.done) job.partsDone++;
       job.done = job.partsDone === NW;
@@ -164,12 +168,37 @@ export function initAnalysis(api) {
       window.lunite.window = { ...w, fixed: true, valid: v, score: job.windows[job.best].score };
       if (api.setTime) api.setTime(Date.parse(w.start));   // o céu do visualizador passa a mostrar o início da janela fixada
       dispatchEvent(new CustomEvent('lunite:window-fixed', { detail: window.lunite.window }));
+      startFilter();
     } else {
       applyWindow(0); job.phase = 'none'; window.lunite.window = null;
       job.verdict = loosen();
     }
     summary(); drawChart(); publish();
   }
+  // ---------------------------------------------------------------- etapa 4: filtragem
+  // Dois requisitos mínimos, mais finos que os da missão, sobre a janela fixada: duração de contato com o Sol e de
+  // comunicação com a Terra (em % da janela, com o equivalente em horas). Só os sítios que passam ficam visíveis.
+  function startFilter() {
+    const P = job.P; filt.on = true; filt.sun = P.sun.minSunPct; filt.comm = P.earth.minCommPct;
+    for (const [id, v, min] of [['fSun', filt.sun, P.sun.minSunPct], ['fComm', filt.comm, P.earth.minCommPct]]) { const el = $(id); el.min = min; el.max = 100; el.value = v; }
+    $('anFilter').hidden = false; filterUI(); draw(); filterChanged();
+  }
+  const hoursOf = (pct) => Math.round(pct / 100 * job.days * 24);
+  function filterUI() {
+    $('fSunV').textContent = `≥ ${filt.sun}% · ${fmtH(hoursOf(filt.sun))}`;
+    $('fCommV').textContent = `≥ ${filt.comm}% · ${fmtH(hoursOf(filt.comm))}`;
+    const all = job.pts.filter(isValid).length, n = valid().length;
+    const st = $('fStatus');
+    if (!n) { st.innerHTML = `<b class="bad">Nenhum sítio passa nos filtros.</b> Afrouxe a duração mínima de ${filt.sun > job.P.sun.minSunPct ? 'contato com o Sol' : ''}${filt.sun > job.P.sun.minSunPct && filt.comm > job.P.earth.minCommPct ? ' e/ou ' : ''}${filt.comm > job.P.earth.minCommPct ? 'comunicação com a Terra' : ''}.`; }
+    else st.innerHTML = `<b>${fmtInt(n)}</b> de ${fmtInt(all)} sítios válidos passam nos filtros. Clique numa barra para selecionar um sítio.`;
+    $('anFilter').classList.toggle('none', !n);
+    // os sliders que estão eliminando tudo ficam em vermelho
+    $('fSun').closest('.an-frow').classList.toggle('warn', !n && filt.sun > job.P.sun.minSunPct);
+    $('fComm').closest('.an-frow').classList.toggle('warn', !n && filt.comm > job.P.earth.minCommPct);
+  }
+  function filterChanged() { dispatchEvent(new CustomEvent('lunite:filter-change', { detail: { sun: filt.sun, comm: filt.comm, n: valid().length } })); }
+  for (const [id, k] of [['fSun', 'sun'], ['fComm', 'comm']]) $(id).addEventListener('input', (e) => { filt[k] = +e.target.value; filterUI(); draw(); summary(); filterChanged(); publish(); });
+
   // nenhuma janela tem sítios válidos: mostra o que a área consegue no máximo e destaca os parâmetros a afrouxar
   function loosen() {
     const H = job.hints, P = job.P, items = [], paths = [];
@@ -216,7 +245,9 @@ export function initAnalysis(api) {
     const d = [u[0] * rr - B.u[0] * R, u[1] * rr - B.u[1] * R, u[2] * rr - B.u[2] * R];
     return [d[0] * B.e[0] + d[1] * B.e[1] + d[2] * B.e[2], d[0] * B.n[0] + d[1] * B.n[1] + d[2] * B.n[2], d[0] * B.u[0] + d[1] * B.u[1] + d[2] * B.u[2]];
   }
-  const valid = () => (job ? job.pts.filter((p) => p && p.flags === 7) : []);
+  const isValid = (p) => p && p.flags === 7;
+  const passes = (p) => isValid(p) && (!filt.on || (p.sunPct >= filt.sun && p.commPct >= filt.comm));
+  const valid = () => (job ? job.pts.filter(passes) : []);
   function range(list) {
     const g = METRICS[metric].get; let lo = Infinity, hi = -Infinity;
     for (const p of list) { const v = g(p); if (v < lo) lo = v; if (v > hi) hi = v; }
@@ -269,7 +300,25 @@ export function initAnalysis(api) {
     bars.userData.list = list;
     api.invalidate?.();
   }
-  function reposition() { if (job) for (const p of job.pts) if (p) p.xyz = null; drawRing(); draw(); }
+  // marcadores: caixa em volta da barra selecionada (branca), fixada (ciano) e comparada (rosa)
+  const markObjs = {};
+  const edges = new THREE.EdgesGeometry(box);
+  for (const [k, col] of [['sel', 0xffffff], ['fixed', 0x7fd4ff], ['cmp', 0xff8ad8]]) {
+    markObjs[k] = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: col, depthTest: false, transparent: true }));
+    markObjs[k].visible = false; markObjs[k].renderOrder = 5; group.add(markObjs[k]);
+  }
+  function drawMarks() {
+    const sp = job ? job.spacing : 100, radius = job ? job.P.radiusKm * 1000 : 3000, w = Math.max(sp * 0.3, 3) * 2.4, H = Math.max(radius * 0.06, sp * 3) * 1.1;
+    for (const k of ['sel', 'fixed', 'cmp']) {
+      const o = markObjs[k], p = job && marks[k] != null ? job.pts[marks[k]] : null;
+      o.visible = !!p && !(k === 'sel' && (marks.sel === marks.fixed || marks.sel === marks.cmp));
+      if (!p) continue;
+      if (!p.xyz) p.xyz = toFrame(p.lat, p.lon, p.h);
+      o.position.set(...p.xyz); o.scale.set(w, w, H);
+    }
+    api.invalidate?.();
+  }
+  function reposition() { if (job) for (const p of job.pts) if (p) p.xyz = null; drawRing(); draw(); drawMarks(); }
   addEventListener('lunite:patch', reposition);   // o patch mudou de centro ou de exagero vertical: reposiciona
 
   // ---------------------------------------------------------------- painel
@@ -309,7 +358,8 @@ export function initAnalysis(api) {
     $('anFunnel').innerHTML = row('Candidatos', c.total) + row(`Inclinação ≤ ${P.probe.slopeMaxDeg}°`, c.slope)
       + row(`Sol ≥ ${P.sun.minSunPct}% · escuridão ≤ ${fmtH(P.sun.maxDarkH)}`, c.sun, 'sun')
       + row(`Terra ≥ ${P.earth.minCommPct}% · apagão ≤ ${fmtH(P.earth.maxBlackoutH)}`, c.earth, 'earth')
-      + row('Válidos (todos os requisitos)', v, 'score');
+      + row('Válidos (todos os requisitos)', job.pts.filter(isValid).length, 'score')
+      + (filt.on ? row('Passam nos filtros', v, 'filter') : '');
   }
 
   // ---------------------------------------------------------------- dica ao passar o mouse numa barra
@@ -322,7 +372,7 @@ export function initAnalysis(api) {
   });
   canvas.addEventListener('pointerleave', () => { tip.hidden = true; });
   function hover(m) {
-    if (!m || !bars || api.frame().mode !== 'local') { tip.hidden = true; return; }
+    if (!m || !bars || api.frame().mode !== 'local' || !$('selChip').hidden) { tip.hidden = true; return; }   // com o chip de seleção aberto, a dica sairia por cima dele
     const r = canvas.getBoundingClientRect();
     ray.setFromCamera(new THREE.Vector2(((m.x - r.left) / r.width) * 2 - 1, -((m.y - r.top) / r.height) * 2 + 1), camera);
     const hit = ray.intersectObject(bars)[0];
@@ -338,4 +388,35 @@ export function initAnalysis(api) {
 
   // primeiro cálculo com os parâmetros atuais (o formulário já existe quando este módulo inicia)
   if (window.lunite && window.lunite.mission) schedule(window.lunite.mission);
+
+  // ---------------------------------------------------------------- API para os cards e a tabela (js/inspect.js)
+  const detailReq = new Map(); let reqN = 0;
+  const ndc = new THREE.Vector2();
+  return {
+    // ponto (sítio) da barra sob o cursor, só entre os que passam nos filtros
+    pickBar(x, y) {
+      if (!bars || !bars.count || api.frame().mode !== 'local') return null;
+      const r = canvas.getBoundingClientRect(); ndc.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera); const hit = ray.intersectObject(bars)[0];
+      return hit ? bars.userData.list[hit.instanceId] : null;
+    },
+    // posição na tela do topo da barra de um sítio
+    screenPos(c) {
+      const p = job && job.pts[c]; if (!p) return null;
+      if (!p.xyz) p.xyz = toFrame(p.lat, p.lon, p.h);
+      const v = new THREE.Vector3(p.xyz[0], p.xyz[1], p.xyz[2] + Math.max(job.P.radiusKm * 1000 * 0.06, job.spacing * 3)).project(camera), r = canvas.getBoundingClientRect();
+      return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height, on: v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05 };
+    },
+    setMarks(m) { marks = { ...m }; drawMarks(); },
+    point: (c) => (job ? job.pts[c] : null),
+    // série detalhada (Sol/Terra × horizonte) de um sítio na janela fixada
+    detail(c) {
+      return new Promise((resolve, reject) => {
+        if (!job || job.phase !== 'fixed') { reject(new Error('sem janela fixada')); return; }
+        const req = ++reqN; detailReq.set(req, (m) => (m.error ? reject(new Error(m.error)) : resolve(m)));
+        workers[c % NW].postMessage({ type: 'detail', id: job.id, req, c, o: job.best });
+      });
+    },
+    info: () => (job && job.phase === 'fixed' ? { t0: job.t0 + job.best * 86400e3, days: job.days, stepH: job.stepH, P: job.P, filt: { ...filt } } : null),
+  };
 }

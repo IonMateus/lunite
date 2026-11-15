@@ -10,14 +10,14 @@
 // Tudo é medido no referencial leste-norte-cima do centro da área (o mesmo do patch do app.js): alturas z incluem a
 // curvatura da Lua, então "o Sol está acima do horizonte" vira comparar inclinações nesse referencial.
 import { Store, aeqdInv } from './tiles.js';
-import { makeSampler, positions, zAt } from './terrain-grid.js?v=20261115d';
+import { makeSampler, positions, zAt } from './terrain-grid.js?v=20261115e';
 
 const NA = 360;               // azimutes do perfil de horizonte (1°)
 const MAX_POINTS = 3000;      // acima disso o espaçamento dos candidatos aumenta
 const CHUNK = 120;            // pontos por lote enviado à página
 const STRIDE = 11;            // lat, lon, h, slope, sunPct, commPct, maxDarkH, maxBlackH, flags, dist, índice do candidato
 
-let store = null, sampler = null, current = 0;
+let store = null, sampler = null, current = 0, ctx = null;
 
 function hAt(G, e, n) {   // altura LOLA (m) bilinear, NaN fora da grade
   const N = G.N, s = (e + G.W / 2) / G.spacing, l = (G.W / 2 - n) / G.spacing;
@@ -74,6 +74,19 @@ async function run(m) {
   for (let a = 0; a < NA; a++) { dirX[a] = Math.sin(2 * Math.PI * a / NA); dirY[a] = Math.cos(2 * Math.PI * a / NA); }
 
   const profP = new Float32Array(NA), profA = new Float32Array(NA);
+  function horizon(e0, n0, z0) {   // tangente da elevação do horizonte em cada azimute, vista do painel (profP) e da antena (profA)
+    for (let a = 0; a < NA; a++) {
+      const dx = dirX[a], dy = dirY[a]; let t = F.spacing, mP = -1e9, mA = -1e9;
+      while (true) {
+        const r = zAny(e0 + dx * t, n0 + dy * t); if (!r) break;
+        const z = r[0], sP = (z - z0 - hp) / t, sA = (z - z0 - ha) / t;
+        if (sP > mP) mP = sP; if (sA > mA) mA = sA;
+        if (t > F.W * 0.25 && z0 + Math.min(hp, ha) + t * Math.min(mP, mA) > zMax) break;   // nada mais longe pode subir o horizonte
+        t += Math.max(r[1] * 0.7, t / 48);
+      }
+      profP[a] = mP; profA[a] = mA;
+    }
+  }
   const T = m.thr, hp = m.panelM, ha = m.antennaM, dSlope = Math.max(F.spacing, 10);
   const counts = { total: cand.length, slope: 0, sun: 0, earth: 0, valid: 0 };
   let out = [];
@@ -108,17 +121,7 @@ async function run(m) {
     if (slope <= m.slopeMax) {
       flags |= 1; counts.slope++;
       // 2) horizonte 360° (inclinação máxima do relevo), para os dois pontos de vista
-      for (let a = 0; a < NA; a++) {
-        const dx = dirX[a], dy = dirY[a]; let t = F.spacing, mP = -1e9, mA = -1e9;
-        while (true) {
-          const r = zAny(e0 + dx * t, n0 + dy * t); if (!r) break;
-          const z = r[0], sP = (z - z0 - hp) / t, sA = (z - z0 - ha) / t;
-          if (sP > mP) mP = sP; if (sA > mA) mA = sA;
-          if (t > F.W * 0.25 && z0 + Math.min(hp, ha) + t * Math.min(mP, mA) > zMax) break;   // nada mais longe pode subir o horizonte
-          t += Math.max(r[1] * 0.7, t / 48);
-        }
-        profP[a] = mP; profA[a] = mA;
-      }
+      horizon(e0, n0, z0);
       // 3) visibilidade em todo o período (janela inicial + atraso máximo), guardada para arrastar a janela depois
       const sv = visSun.subarray(j * n, (j + 1) * n), cv = visCom.subarray(j * n, (j + 1) * n);
       for (let k = 0; k < n; k++) { sv[k] = sTan[k] > at(profP, sAz[k]) ? 1 : 0; cv[k] = m.ok[k] && eTan[k] > at(profA, eAz[k]) ? 1 : 0; }
@@ -134,6 +137,8 @@ async function run(m) {
     }
   }
   flush(true);
+  // guarda o contexto para a série detalhada de um sítio (cards da filtragem), sem recalcular nada além do horizonte dele
+  ctx = { id, cand, F, horizon, profP, profA, at, sTan, sAz, eTan, eAz, ok: m.ok, nW, dStep: m.dStep, stepH: m.stepH };
 
   // ---- etapa 3: arrastar a janela de tempo, um dia por vez, dentro do atraso máximo (cada worker avalia os seus pontos;
   //      a página junta as partes de cada janela e escolhe a melhor)
@@ -157,6 +162,21 @@ async function run(m) {
   postMessage({ type: 'sweep', id, part, hints });
 }
 
+// série de um sítio na janela fixada: elevação do Sol e da Terra e do horizonte do relevo nos azimutes deles (graus)
+function detail(m) {
+  if (!ctx || ctx.id !== m.id) { postMessage({ type: 'detail', id: m.id, req: m.req, error: 'cálculo antigo' }); return; }
+  const X = ctx, [e0, n0] = X.cand[m.c], z0 = zAt(X.F, e0, n0);
+  X.horizon(e0, n0, z0);
+  const k0 = m.o * X.dStep, N = X.nW, R2D = 180 / Math.PI;
+  const sunEl = new Float32Array(N), sunHz = new Float32Array(N), earthEl = new Float32Array(N), earthHz = new Float32Array(N), ok = new Uint8Array(N);
+  for (let i = 0; i < N; i++) {
+    const k = k0 + i;
+    sunEl[i] = Math.atan(X.sTan[k]) * R2D; sunHz[i] = Math.atan(X.at(X.profP, X.sAz[k])) * R2D;
+    earthEl[i] = Math.atan(X.eTan[k]) * R2D; earthHz[i] = Math.atan(X.at(X.profA, X.eAz[k])) * R2D; ok[i] = X.ok[k];
+  }
+  postMessage({ type: 'detail', id: m.id, req: m.req, c: m.c, k0, stepH: X.stepH, sunEl, sunHz, earthEl, earthHz, ok }, [sunEl.buffer, sunHz.buffer, earthEl.buffer, earthHz.buffer, ok.buffer]);
+}
+
 function latLonAt(F, e, n) {   // lat/lon do ponto (e, n) da grade fina (bilinear nas colunas lat/lon da grade)
   const N = F.N, s = (e + F.W / 2) / F.spacing, l = (F.W / 2 - n) / F.spacing;
   const j = Math.min(N - 2, Math.floor(s)), i = Math.min(N - 2, Math.floor(l)), fj = s - j, fi = l - i, k = i * N + j;
@@ -177,5 +197,6 @@ onmessage = async (ev) => {
     }
     if (m.type === 'run') { current = m.id; await run(m); }
     if (m.type === 'cancel') current = -1;
+    if (m.type === 'detail') detail(m);
   } catch (err) { postMessage({ type: 'error', id: m.id, message: String(err && err.stack || err) }); }
 };

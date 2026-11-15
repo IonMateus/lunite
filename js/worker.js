@@ -2,7 +2,7 @@
 // patch  : heights on an N x N grid (azimuthal-equidistant around the centre) + a coarse context grid 8x wider
 // shade  : for every vertex, the Sun's margin over the terrain horizon in disc diameters (0..1 = fraction of the disc visible)
 import { Store } from './tiles.js';
-import { makeSampler, positions, zAt } from './terrain-grid.js?v=20261115d';
+import { makeSampler, positions, zAt } from './terrain-grid.js?v=20261115e';
 
 let store = null, P = null;   // P = last patch kept for re-shading when the time changes
 
