@@ -10,7 +10,7 @@
 import { R, unit, enuBasis } from './tiles.js';
 
 const $ = (id) => document.getElementById(id);
-const STRIDE = 10;
+const STRIDE = 11;
 const D2R = Math.PI / 180;
 const STATION_MIN_EL = 10;   // elevação mínima da Lua vista da estação em solo (°), típica das antenas de espaço profundo
 const STATIONS = {   // mesmas coordenadas do mission.js
@@ -30,8 +30,11 @@ const fmtDate = (ms) => new Date(ms).toLocaleDateString('pt-BR', { timeZone: 'UT
 
 export function initAnalysis(api) {
   const { THREE, scene, camera, canvas, eph } = api;
-  const worker = new Worker(new URL('./analysis-worker.js?v=20261115c', import.meta.url), { type: 'module' });
-  worker.postMessage({ type: 'init', base: new URL(api.base, location.href).href, sites: api.sites.map((s) => ({ id: s.id, lat: s.lat, lon: s.lon })) });
+  // vários workers em paralelo (um por núcleo livre, até 6): cada um calcula uma parte dos pontos
+  const NW = +new URLSearchParams(location.search).get('workers') || Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 4) - 1));   // ?workers=N força (testes)
+  const workers = Array.from({ length: NW }, () => new Worker(new URL('./analysis-worker.js?v=20261115d', import.meta.url), { type: 'module' }));
+  const sendAll = (msg) => workers.forEach((w) => w.postMessage(msg));
+  sendAll({ type: 'init', base: new URL(api.base, location.href).href, sites: api.sites.map((s) => ({ id: s.id, lat: s.lat, lon: s.lon })) });
 
   let metric = 'sun', runId = 0, job = null, timer = 0, lastKey = '';
   const group = new THREE.Group(); group.name = 'analysis'; scene.add(group);
@@ -42,11 +45,12 @@ export function initAnalysis(api) {
   function schedule(P) {
     const key = JSON.stringify([P.site.lat, P.site.lon, P.radiusKm, P.probe, P.earth, P.sun, P.time]);
     if (key === lastKey) return; lastKey = key;
+    window.lunite = window.lunite || {}; window.lunite.analysis = null;   // o resultado anterior deixa de valer já
     clearTimeout(timer); timer = setTimeout(() => start(P), 350);
   }
 
   function start(P) {
-    const id = ++runId; worker.postMessage({ type: 'cancel' }); clear(); clearInterval(pumpTimer); pumpTimer = 0;
+    const id = ++runId; sendAll({ type: 'cancel' }); clear(); clearInterval(pumpTimer); pumpTimer = 0;
     document.body.classList.toggle('analyzing', P.site.mode !== 'none');   // com um alvo, o painel da direita mostra os sítios (CSS: body.analyzing.local)
     window.lunite = window.lunite || {}; window.lunite.analysis = null; window.lunite.window = null;   // nada do cálculo anterior fica valendo
     if (P.site.mode === 'none') { job = null; status('Escolha um local de pouso nos parâmetros da missão.'); return; }
@@ -72,34 +76,57 @@ export function initAnalysis(api) {
       else { const sm = unit(o.g.subMoon.lat, o.g.subMoon.lon); ok[k] = st.some((u) => u[0] * sm[0] + u[1] * sm[1] + u[2] * sm[2] >= cosMin) ? 1 : 0; }
     }
     job = { id, P, t0, t1, days, stepH, n, delay, delayClamped: delay < P.time.maxDelayDays, noStationData, pts: [], counts: null, done: false, spacing: P.probe.precisionM,
-            phase: 'initial', cur: 0, windows: [], queue: [], best: null, hints: null };
+            phase: 'initial', cur: 0, windows: [], queue: [], best: null, hints: null, total: 0, prog: new Array(NW).fill(0), partsDone: 0, sweeps: 0 };
     drawChart();
     $('anWin').className = 'an-win initial'; $('anWinLbl').textContent = 'Janela inicial em avaliação';
     $('anWinDates').textContent = `${fmtDate(t0)} – ${fmtDate(t1)}`;
     status('Analisando…'); progress(0);
-    worker.postMessage({ type: 'run', id, lat: P.site.lat, lon: P.site.lon, radiusM: P.radiusKm * 1000, spacingM: P.probe.precisionM,
+    const runMsg = { type: 'run', id, lat: P.site.lat, lon: P.site.lon, radiusM: P.radiusKm * 1000, spacingM: P.probe.precisionM,
       slopeMax: P.probe.slopeMaxDeg, panelM: P.probe.panelM, antennaM: P.probe.antennaM, stepH, sun, earth, ok, nW, dStep, nOff: delay + 1,
-      thr: { minSunPct: P.sun.minSunPct, maxDarkH: P.sun.maxDarkH, minCommPct: P.earth.minCommPct, maxBlackoutH: P.earth.maxBlackoutH } },
-    [sun.buffer, earth.buffer, ok.buffer]);
+      thr: { minSunPct: P.sun.minSunPct, maxDarkH: P.sun.maxDarkH, minCommPct: P.earth.minCommPct, maxBlackoutH: P.earth.maxBlackoutH } };
+    workers.forEach((w, part) => w.postMessage({ ...runMsg, part, parts: NW }));
   }
 
-  worker.onmessage = (ev) => {
+  workers.forEach((w) => w.onmessage = onWorker);
+  function onWorker(ev) {
     const m = ev.data;
     if (m.type === 'error') { status('Erro na análise: ' + m.message.split('\n')[0], 'err'); console.error(m.message); return; }
     if (!job || m.id !== job.id) return;
-    if (m.type === 'progress') { const lbl = m.stage === 'pontos' ? 'calculando Sol e Terra' : 'carregando ' + m.stage; status(`Analisando… ${lbl}`); progress(m.stage === 'pontos' ? 0.25 + 0.75 * m.f : 0.25 * m.f); return; }
-    if (m.type === 'ring') { job.ring = m.ring; draw(); return; }
+    if (m.type === 'progress') {
+      job.prog[m.part] = m.stage === 'pontos' ? 0.25 + 0.75 * m.f : 0.25 * m.f;
+      const lbl = m.stage === 'pontos' ? 'calculando Sol e Terra' : 'carregando ' + m.stage;
+      if (!job.pts.length) status(`Analisando… ${lbl}`);
+      progress(job.prog.reduce((a, b) => a + b, 0) / NW); return;
+    }
+    if (m.type === 'ring') { job.ring = m.ring; drawRing(); api.invalidate?.(); return; }
     if (m.type === 'chunk') {
       const a = m.pts;
-      for (let i = 0; i < a.length; i += STRIDE) job.pts.push({ lat: a[i], lon: a[i + 1], h: a[i + 2], slope: a[i + 3], sunPct: a[i + 4], commPct: a[i + 5], maxDarkH: a[i + 6], maxBlackoutH: a[i + 7], flags: a[i + 8], dist: a[i + 9] });
-      job.counts = m.counts; job.spacing = m.spacing; job.done = m.done; job.ms = m.ms;
+      for (let i = 0; i < a.length; i += STRIDE) job.pts[a[i + 10]] = { lat: a[i], lon: a[i + 1], h: a[i + 2], slope: a[i + 3], sunPct: a[i + 4], commPct: a[i + 5], maxDarkH: a[i + 6], maxBlackoutH: a[i + 7], flags: a[i + 8], dist: a[i + 9] };
+      job.total = m.counts.total; job.spacing = m.spacing; job.ms = m.ms;
+      if (m.done) job.partsDone++;
+      job.done = job.partsDone === NW;
       draw(); summary();
-      if (m.done) { job.phase = 'sweep'; status(`Janela inicial: <b>${fmtInt(m.counts.valid)}</b> válidos · procurando a melhor janela…`); progress(0); }
+      if (job.done) { job.phase = 'sweep'; status(`Janela inicial: <b>${fmtInt(counts().valid)}</b> válidos · procurando a melhor janela…`); progress(0); }
       publish();
     }
-    if (m.type === 'window') { job.windows[m.o] = m; job.queue.push(m.o); pump(); }
-    if (m.type === 'sweep') { job.best = m.best; job.hints = m.hints; pump(); }
-  };
+    if (m.type === 'window') {   // junta a parte deste worker na janela o; quando todas chegam, a janela entra na fila
+      let w = job.windows[m.o];
+      if (!w) w = job.windows[m.o] = { o: m.o, met: new Float32Array(4 * job.total).fill(NaN), fl: new Uint8Array(job.total), valid: 0, sum: 0, sunOk: 0, earthOk: 0, parts: 0 };
+      for (let j = 0, c = m.part; j < m.fl.length; j++, c += m.parts) { w.fl[c] = m.fl[j]; w.met.set(m.met.subarray(4 * j, 4 * j + 4), 4 * c); }
+      w.valid += m.valid; w.sum += m.sum; w.sunOk += m.sunOk; w.earthOk += m.earthOk;
+      if (++w.parts === NW) { w.score = w.valid ? w.sum / w.valid : 0; job.queue.push(m.o); pump(); }
+    }
+    if (m.type === 'sweep') {   // junta as dicas; com todas as partes, escolhe a melhor janela (mais válidos; empate: maior score médio)
+      const H = m.hints;
+      if (!job.hints) job.hints = { ...H };
+      else { const J = job.hints; J.slopeOk += H.slopeOk; J.minSlope = Math.min(J.minSlope, H.minSlope); J.bestSun = Math.max(J.bestSun, H.bestSun); J.bestDark = Math.min(J.bestDark, H.bestDark); J.bestComm = Math.max(J.bestComm, H.bestComm); J.bestBlack = Math.min(J.bestBlack, H.bestBlack); }
+      if (++job.sweeps === NW) {
+        let best = -1, bv = 0, bs = -1;
+        job.windows.forEach((w, o) => { if (w.valid > bv || (w.valid === bv && w.valid > 0 && w.score > bs)) { best = o; bv = w.valid; bs = w.score; } });
+        job.best = best; pump();
+      }
+    }
+  }
   function publish() {
     window.lunite = window.lunite || {};
     window.lunite.analysis = { counts: counts(), done: job.done, phase: job.phase, window: winInfo(job.cur), spacing: job.spacing, ms: job.ms, points: job.pts };
@@ -116,7 +143,7 @@ export function initAnalysis(api) {
       if (!job) { clearInterval(pumpTimer); pumpTimer = 0; return; }
       const o = job.queue.shift();
       if (o != null) { applyWindow(o); progress((o + 1) / (job.delay + 1)); return; }
-      if (job.best !== null || job.hints) { clearInterval(pumpTimer); pumpTimer = 0; finish(); }
+      if (job.best !== null) { clearInterval(pumpTimer); pumpTimer = 0; finish(); }
     }, per);
   }
   function applyWindow(o) {
@@ -189,47 +216,61 @@ export function initAnalysis(api) {
     const d = [u[0] * rr - B.u[0] * R, u[1] * rr - B.u[1] * R, u[2] * rr - B.u[2] * R];
     return [d[0] * B.e[0] + d[1] * B.e[1] + d[2] * B.e[2], d[0] * B.n[0] + d[1] * B.n[1] + d[2] * B.n[2], d[0] * B.u[0] + d[1] * B.u[1] + d[2] * B.u[2]];
   }
-  const valid = () => (job ? job.pts.filter((p) => p.flags === 7) : []);
+  const valid = () => (job ? job.pts.filter((p) => p && p.flags === 7) : []);
   function range(list) {
     const g = METRICS[metric].get; let lo = Infinity, hi = -Infinity;
     for (const p of list) { const v = g(p); if (v < lo) lo = v; if (v > hi) hi = v; }
     return [lo, hi];
   }
+  const cA = new THREE.Color(), cB = new THREE.Color(), cOut = new THREE.Color();
   function colorAt(t) {
-    const [a, b] = METRICS[metric].colors.map((c) => new THREE.Color(c));
-    return a.lerp(b, Math.max(0, Math.min(1, t)));
+    const [a, b] = METRICS[metric].colors; cA.set(a); cB.set(b);
+    return cOut.copy(cA).lerp(cB, Math.max(0, Math.min(1, t)));
   }
   function clear() {
     for (const o of [bars, dots, ring]) if (o) { group.remove(o); o.geometry.dispose(); o.material.dispose(); }
-    bars = dots = ring = null; $('anTip').hidden = true;
+    bars = dots = ring = null; $('anTip').hidden = true; api.invalidate?.();
+  }
+  // As malhas das barras e dos pontos são criadas uma vez por cálculo (com espaço para todos os candidatos) e só têm
+  // posições, cores e quantidade atualizadas — trocar de janela não recria nada (antes recriava ~2.000 barras por janela).
+  const box = new THREE.BoxGeometry(1, 1, 1); box.translate(0, 0, 0.5);
+  const mtx = new THREE.Matrix4(), q0 = new THREE.Quaternion(), vPos = new THREE.Vector3(), vScl = new THREE.Vector3();
+  function ensureMeshes(cap) {
+    if (bars && bars.userData.cap >= cap) return;
+    for (const o of [bars, dots]) if (o) { group.remove(o); if (o !== bars) o.geometry.dispose(); o.material.dispose(); }
+    bars = new THREE.InstancedMesh(box, new THREE.MeshBasicMaterial(), cap); bars.userData.cap = cap; bars.count = 0;
+    bars.instanceMatrix.setUsage(THREE.DynamicDrawUsage); bars.setColorAt(0, new THREE.Color()); bars.frustumCulled = false; group.add(bars);
+    const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(cap * 3), 3).setUsage(THREE.DynamicDrawUsage));
+    dots = new THREE.Points(dg, new THREE.PointsMaterial({ color: 0xffffff, size: 5, sizeAttenuation: false })); dots.frustumCulled = false; group.add(dots);
+  }
+  function drawRing() {
+    if (ring) { group.remove(ring); ring.geometry.dispose(); ring.material.dispose(); ring = null; }
+    if (!job || !job.ring) return;
+    const pts = []; for (let i = 0; i < job.ring.length; i += 3) pts.push(...toFrame(job.ring[i], job.ring[i + 1], job.ring[i + 2] + 2));
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    ring = new THREE.LineLoop(g, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })); group.add(ring);
   }
   function draw() {
-    clear(); if (!job) return;
+    if (!job) { clear(); return; }
     const list = valid(), sp = job.spacing, radius = job.P.radiusKm * 1000;
-    if (job.ring) {   // círculo da área de busca sobre o relevo
-      const pts = []; for (let i = 0; i < job.ring.length; i += 3) pts.push(...toFrame(job.ring[i], job.ring[i + 1], job.ring[i + 2] + 2));
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-      ring = new THREE.LineLoop(g, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })); group.add(ring);
-    }
     legend(list);
-    if (!list.length) return;
-    const [lo, hi] = range(list), g = METRICS[metric].get;
-    const w = Math.max(sp * 0.3, 3), Hmax = Math.max(radius * 0.06, sp * 3);
-    const box = new THREE.BoxGeometry(1, 1, 1); box.translate(0, 0, 0.5);
-    bars = new THREE.InstancedMesh(box, new THREE.MeshBasicMaterial(), list.length);
-    const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), dotPos = new Float32Array(list.length * 3);
-    list.forEach((p, i) => {
-      const t = hi > lo ? (g(p) - lo) / (hi - lo) : 1, [x, y, z] = toFrame(p.lat, p.lon, p.h);
-      mtx.compose(new THREE.Vector3(x, y, z), q, new THREE.Vector3(w, w, Hmax * (0.12 + 0.88 * t)));
-      bars.setMatrixAt(i, mtx); bars.setColorAt(i, colorAt(t));
-      dotPos.set([x, y, z + Math.max(1.5, sp * 0.02)], 3 * i);
-    });
-    bars.instanceMatrix.needsUpdate = true; bars.instanceColor.needsUpdate = true; bars.computeBoundingSphere();
-    bars.userData.list = list; group.add(bars);
-    const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(dotPos, 3));
-    dots = new THREE.Points(dg, new THREE.PointsMaterial({ color: 0xffffff, size: 5, sizeAttenuation: false })); group.add(dots);
+    ensureMeshes(Math.max(1, job.total || list.length));
+    const [lo, hi] = list.length ? range(list) : [0, 0], g = METRICS[metric].get;
+    const w = Math.max(sp * 0.3, 3), Hmax = Math.max(radius * 0.06, sp * 3), dp = dots.geometry.getAttribute('position'), lift = Math.max(1.5, sp * 0.02);
+    for (let i = 0; i < list.length; i++) {
+      const p = list[i], t = hi > lo ? (g(p) - lo) / (hi - lo) : 1;
+      if (!p.xyz) p.xyz = toFrame(p.lat, p.lon, p.h);   // posição no referencial do patch (recalculada quando o patch muda)
+      const [x, y, z] = p.xyz;
+      mtx.compose(vPos.set(x, y, z), q0, vScl.set(w, w, Hmax * (0.12 + 0.88 * t)));
+      bars.setMatrixAt(i, mtx); bars.setColorAt(i, colorAt(t)); dp.setXYZ(i, x, y, z + lift);
+    }
+    bars.count = list.length; bars.instanceMatrix.needsUpdate = true; if (bars.instanceColor) bars.instanceColor.needsUpdate = true;
+    dp.needsUpdate = true; dots.geometry.setDrawRange(0, list.length);
+    bars.userData.list = list;
+    api.invalidate?.();
   }
-  addEventListener('lunite:patch', draw);   // o patch mudou de centro ou de exagero vertical: reposiciona
+  function reposition() { if (job) for (const p of job.pts) if (p) p.xyz = null; drawRing(); draw(); }
+  addEventListener('lunite:patch', reposition);   // o patch mudou de centro ou de exagero vertical: reposiciona
 
   // ---------------------------------------------------------------- painel
   const seg = $('anSeg');
@@ -246,8 +287,8 @@ export function initAnalysis(api) {
     const [lo, hi] = range(list); $('anMin').textContent = fmtPct(lo); $('anMax').textContent = fmtPct(hi);
   }
   function counts() {
-    const c = { total: job.pts.length, slope: 0, sun: 0, earth: 0, valid: 0 };
-    for (const p of job.pts) { if (p.flags & 1) c.slope++; if (p.flags & 2) c.sun++; if (p.flags & 4) c.earth++; if (p.flags === 7) c.valid++; }
+    const c = { total: job.total || 0, slope: 0, sun: 0, earth: 0, valid: 0 };
+    for (const p of job.pts) { if (!p) continue; if (p.flags & 1) c.slope++; if (p.flags & 2) c.sun++; if (p.flags & 4) c.earth++; if (p.flags === 7) c.valid++; }
     return c;
   }
   function summary() {

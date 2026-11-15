@@ -3,10 +3,11 @@ import * as THREE from '../vendor/three.module.min.js';
 import { OrbitControls } from '../vendor/OrbitControls.js';
 import { Store, R, unit, enuBasis, aeqdInv, aeqdFwd } from './tiles.js';
 import { Ephem, validate } from './ephem.js';
-import { initMission } from './mission.js?v=20261115c';
-import { initAnalysis } from './analysis.js?v=20261115c';
+import { earthFrame, earthshine, GLSL_COMMON, EARTH_VERT, EARTH_FRAG, sunDiscCanvas } from './sky.js?v=20261115d';
+import { initMission } from './mission.js?v=20261115d';
+import { initAnalysis } from './analysis.js?v=20261115d';
 // versão dos arquivos JS: o index.html confere, e o ?v= nos imports evita que o navegador use arquivos antigos do cache
-window.LUNITE_BUILD = '20261115c';
+window.LUNITE_BUILD = '20261115d';
 
 const BASE = 'data/';
 const D2R = Math.PI / 180;
@@ -28,19 +29,22 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
 const globeScene = new THREE.Scene(), localScene = new THREE.Scene();
 globeScene.background = new THREE.Color(0x000000); localScene.background = new THREE.Color(0x000000);
-function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+// render sob demanda: a cena só é redesenhada quando algo muda (câmera, tempo, terreno, barras), não 60 vezes por segundo parada
+let dirty = 2;
+function invalidate(frames = 2) { dirty = Math.max(dirty, frames); }
+function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); invalidate(); }
 addEventListener('resize', resize);
 
 // ------------------------------------------------------------------ data
 const store = new Store(BASE);
 const eph = new Ephem();
 let SITES = [], moonTex = null, earthDay = null, earthNight = null;
-const worker = new Worker(new URL('./worker.js?v=20261115c', import.meta.url), { type: 'module' });
+const worker = new Worker(new URL('./worker.js?v=20261115d', import.meta.url), { type: 'module' });
 
 function msg(text, cls = '') { const el = $('status'); el.textContent = text; el.className = cls; }
 
 // ------------------------------------------------------------------ globe
-const globeUniforms = { sun: { value: new THREE.Vector3(1, 0, 0) }, colorTex: { value: null }, slopeTex: { value: null }, exag: { value: 1 }, exposure: { value: 1 } };
+const globeUniforms = { sun: { value: new THREE.Vector3(1, 0, 0) }, earthL: { value: new THREE.Vector3(1, 0, 0) }, earthI: { value: 0 }, colorTex: { value: null }, slopeTex: { value: null }, exag: { value: 1 }, exposure: { value: 1 } };
 function makeGlobe() {
   const nLon = 512, nLat = 256, pos = [], idx = [];
   for (let i = 0; i <= nLat; i++) for (let j = 0; j <= nLon; j++) { const u = unit(90 - 180 * i / nLat, -180 + 360 * j / nLon); pos.push(...u); }
@@ -49,8 +53,8 @@ function makeGlobe() {
   const m = new THREE.ShaderMaterial({
     uniforms: globeUniforms,
     vertexShader: `varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-    fragmentShader: `
-      uniform vec3 sun; uniform sampler2D colorTex; uniform sampler2D slopeTex; uniform float exag; uniform float exposure; varying vec3 vP;
+    fragmentShader: GLSL_COMMON + `
+      uniform vec3 sun; uniform vec3 earthL; uniform float earthI; uniform sampler2D colorTex; uniform sampler2D slopeTex; uniform float exag; uniform float exposure; varying vec3 vP;
       const float PI = 3.141592653589793;
       void main(){
         vec3 up = normalize(vP);
@@ -62,11 +66,11 @@ function makeGlobe() {
         vec3 E = normalize(vec3(-sin(lon), cos(lon), 0.0)), N = cross(up, E);
         vec3 n = normalize(up - exag * (slope.x * E + slope.y * N));
         vec3 alb = pow(texture2D(colorTex, uvC).rgb, vec3(2.2));
-        float mu0 = dot(n, sun), mu = max(dot(n, normalize(cameraPosition - vP)), 0.0);
-        float lit = mu0 > 0.0 ? (0.5 * 2.0 * mu0 / (mu0 + mu + 1e-4) + 0.5 * mu0) : 0.0;
-        lit *= smoothstep(-0.02, 0.02, dot(up, sun));
-        vec3 c = alb * lit * 2.2 * exposure + alb * 0.012;
-        gl_FragColor = vec4(pow(c / (1.0 + c), vec3(1.0/2.2)), 1.0);
+        vec3 V = normalize(cameraPosition - vP);
+        float lit = lunarLambert(dot(n, sun), dot(n, V), phaseDeg(sun, V)) * smoothstep(-0.01, 0.01, dot(up, sun));
+        float es = earthI * lunarLambert(dot(n, earthL), dot(n, V), phaseDeg(earthL, V));   // luz da Terra no lado noturno
+        vec3 c = alb * (lit + es) * PHOTO * exposure;
+        gl_FragColor = vec4(toScreen(c), 1.0);
       }`
   });
   return new THREE.Mesh(g, m);
@@ -98,30 +102,36 @@ async function loadGlobeSlopes() {
 }
 
 // Earth and Sun markers in the globe view (true directions; distance not to scale)
-const earthGlobe = new THREE.Mesh(new THREE.SphereGeometry(0.18, 48, 24), new THREE.MeshBasicMaterial({ color: 0x3a6ea5 }));
+// (direções reais; distâncias e tamanhos fora de escala para caberem na tela). A Terra gira com a orientação real.
+const earthGlobeUniforms = { day: { value: null }, night: { value: null }, sunL: { value: new THREE.Vector3(1, 0, 0) }, exposure: { value: 1 } };
+const earthGlobe = new THREE.Mesh(new THREE.SphereGeometry(0.18, 64, 32), new THREE.ShaderMaterial({ uniforms: earthGlobeUniforms, vertexShader: EARTH_VERT, fragmentShader: EARTH_FRAG }));
 globeScene.add(earthGlobe);
-const sunGlobe = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTexture(false), transparent: true })); sunGlobe.scale.set(0.25, 0.25, 1); globeScene.add(sunGlobe);
+const sunGlobe = new THREE.Sprite(new THREE.SpriteMaterial({ map: null, transparent: true, depthWrite: false })); sunGlobe.scale.set(0.9, 0.9, 1); globeScene.add(sunGlobe);
+const sunGlobeGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: null, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); sunGlobeGlow.scale.set(4, 4, 1); globeScene.add(sunGlobeGlow);
 
 // ------------------------------------------------------------------ local terrain
-const localUniforms = { sun: { value: new THREE.Vector3(0, 0, 1) }, colorTex: { value: null }, exposure: { value: 1 }, shadows: { value: 1 }, overlay: { value: 0 } };
+const localUniforms = { sun: { value: new THREE.Vector3(0, 0, 1) }, earthL: { value: new THREE.Vector3(0, 1, 0) }, earthI: { value: 0 }, colorTex: { value: null }, exposure: { value: 1 }, shadows: { value: 1 }, overlay: { value: 0 } };
 const localMat = new THREE.ShaderMaterial({
   uniforms: localUniforms,
   vertexShader: `
     attribute float vis; attribute vec2 ll; attribute float nasa; attribute float pix;
     varying vec3 vN; varying float vVis; varying vec2 vLL; varying vec3 vP; varying float vNasa; varying float vPix;
     void main(){ vN = normal; vVis = vis; vLL = ll; vP = position; vNasa = nasa; vPix = pix; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-  fragmentShader: `
-    uniform vec3 sun; uniform sampler2D colorTex; uniform float exposure; uniform float shadows; uniform int overlay;
+  fragmentShader: GLSL_COMMON + `
+    uniform vec3 sun; uniform vec3 earthL; uniform float earthI; uniform sampler2D colorTex; uniform float exposure; uniform float shadows; uniform int overlay;
     varying vec3 vN; varying float vVis; varying vec2 vLL; varying vec3 vP; varying float vNasa; varying float vPix;
     vec3 ramp(float x){ x = clamp(x,0.0,1.0); return vec3(smoothstep(0.35,0.9,x), smoothstep(0.05,0.6,x)*(1.0-0.3*x), smoothstep(-0.2,0.35,x)*(1.0-smoothstep(0.55,1.0,x))) * 0.9 + 0.05; }
     void main(){
-      vec3 n = normalize(vN);
-      vec3 alb = vec3(0.16);   // uniform albedo: at these scales only LOLA geometry is shown (colour maps are ~2.6 km/px)
-      float mu0 = dot(n, sun), mu = max(dot(n, normalize(cameraPosition - vP)), 0.0);
-      float lit = mu0 > 0.0 ? (0.5 * 2.0 * mu0 / (mu0 + mu + 1e-4) + 0.5 * mu0) : 0.0;
-      lit *= mix(1.0, vVis, shadows);
-      vec3 c = alb * lit * 2.2 * exposure + alb * 0.012;
-      c = c / (1.0 + c);
+      vec3 n = normalize(vN), V = normalize(cameraPosition - vP);
+      // albedo: mapa de cor da Lua (NASA SVS, ~2,6 km/px) — dá a diferença real entre mares e terras altas; o detalhe fino é o relevo LOLA
+      vec2 uv = vec2((vLL.y + 180.0) / 360.0, (90.0 - vLL.x) / 180.0);
+      vec3 alb = pow(texture2D(colorTex, uv).rgb, vec3(2.2));
+      // sombra: vVis é a margem do Sol sobre o horizonte (em diâmetros do disco), interpolada entre vértices -> borda nítida
+      float shadow = clamp(vVis, 0.0, 1.0);
+      float lit = lunarLambert(dot(n, sun), dot(n, V), phaseDeg(sun, V)) * mix(1.0, shadow, shadows);
+      float es = earthI * lunarLambert(dot(n, earthL), dot(n, V), phaseDeg(earthL, V));
+      vec3 c = alb * (lit + es) * PHOTO * exposure;
+      c = aces(c);
       if (overlay == 1 || overlay == 2) { if (vNasa >= 0.0) c = mix(c, ramp(vNasa), 0.75); }
       if (overlay == 3) { float r = log2(max(vPix,1.0)) / log2(500.0); c = mix(c, ramp(1.0 - r), 0.6); }
       gl_FragColor = vec4(pow(c, vec3(1.0/2.2)), 1.0);
@@ -136,20 +146,13 @@ function discTexture(soft) {
   g.fillStyle = gr; g.fillRect(0, 0, 128, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 // true-size solar disc (0.533 deg) plus a faint glow so it can be found on screen
-const sunSky = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTexture(false), depthWrite: false, transparent: true }));
-const sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTexture(true), depthWrite: false, transparent: true, blending: THREE.AdditiveBlending }));
+const sunTex = new THREE.CanvasTexture(sunDiscCanvas()); sunTex.colorSpace = THREE.SRGBColorSpace;
+const sunSky = new THREE.Sprite(new THREE.SpriteMaterial({ map: sunTex, depthWrite: false, transparent: true }));
+const sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTexture(true), depthWrite: false, transparent: true, blending: THREE.AdditiveBlending }));   // brilho da lente (não há atmosfera)
+sunGlobe.material.map = sunTex; sunGlobeGlow.material.map = sunGlow.material.map;
 localScene.add(sunSky, sunGlow);
-const earthUniforms = { day: { value: null }, night: { value: null }, sunL: { value: new THREE.Vector3(1, 0, 0) } };
-const earthSky = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 32), new THREE.ShaderMaterial({
-  uniforms: earthUniforms,
-  vertexShader: `varying vec3 vO; varying vec3 vW; void main(){ vO = position; vW = normalize((modelMatrix * vec4(position,0.0)).xyz); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-  fragmentShader: `uniform sampler2D day; uniform sampler2D night; uniform vec3 sunL; varying vec3 vO; varying vec3 vW;
-    void main(){ vec3 o = normalize(vO); float lon = atan(o.y,o.x), lat = asin(o.z);
-      vec2 uv = vec2((lon + 3.14159265)/6.2831853, (1.5707963 - lat)/3.14159265);
-      float d = dot(normalize(vW), sunL);
-      vec3 c = texture2D(day, uv).rgb * smoothstep(-0.05, 0.25, d) + texture2D(night, uv).rgb * (1.0 - smoothstep(-0.1, 0.05, d)) * 0.8;
-      gl_FragColor = vec4(c, 1.0); }`
-}));
+const earthUniforms = { day: { value: null }, night: { value: null }, sunL: { value: new THREE.Vector3(1, 0, 0) }, exposure: { value: 1 } };
+const earthSky = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 48), new THREE.ShaderMaterial({ uniforms: earthUniforms, vertexShader: EARTH_VERT, fragmentShader: EARTH_FRAG }));
 localScene.add(earthSky);
 
 // ------------------------------------------------------------------ labels
@@ -186,31 +189,35 @@ function updateSky() {
   const g = eph.at(state.t);
   globeUniforms.sun.value.set(...g.sun);
   const ed = new THREE.Vector3(...g.earthDir); earthGlobe.position.copy(ed.clone().multiplyScalar(6));
-  sunGlobe.position.set(...g.sun).multiplyScalar(40);
+  sunGlobe.position.set(...g.sun).multiplyScalar(40); sunGlobeGlow.position.copy(sunGlobe.position);
+  const es = earthshine(g); globeUniforms.earthL.value.copy(ed); globeUniforms.earthI.value = es; earthGlobeUniforms.sunL.value.set(...g.sun);
+  const F = earthFrame(state.t, g);   // eixos reais da Terra no referencial da Lua (= referencial do globo)
+  if (F) earthGlobe.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(...F.x), new THREE.Vector3(...F.y), new THREE.Vector3(...F.z)));
   if (state.mode === 'local' && state.patch) {
     const o = topoCentre(), W = state.patch.W, D = W * 30;
-    localUniforms.sun.value.set(...o.sun);
+    localUniforms.sun.value.set(...o.sun); localUniforms.earthL.value.set(...o.earth); localUniforms.earthI.value = es;
     sunSky.position.set(...o.sun).multiplyScalar(D); const sr = D * Math.tan(0.2665 * D2R) * 2; sunSky.scale.set(sr, sr, 1);
-    sunGlow.position.copy(sunSky.position); sunGlow.scale.set(sr * 14, sr * 14, 1);
+    sunGlow.position.copy(sunSky.position); sunGlow.scale.set(sr * 9, sr * 9, 1);
     earthSky.position.set(...o.earth).multiplyScalar(D); const er = D * Math.tan(o.earthHalfDeg * D2R); earthSky.scale.set(er, er, er);
-    orientEarth(g, o);
+    orientEarth(g, o, F);
     readSky(o);
   } else {
     const o = eph.topo(state.t, state.lat, state.lon, 0); readSky(o);
   }
   $('tlabel').textContent = new Date(state.t).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
   $('tsrc').textContent = 'Horizons table ' + g.table;
+  invalidate();
 }
-function orientEarth(g, o) {
-  // Earth's sub-Moon point (Horizons) must face the Moon. Earth's pole is approximated by the Moon's pole (visual only).
-  if (!g.subMoon) { earthSky.quaternion.identity(); return; }
+function orientEarth(g, o, F) {
   const B = enuBasis(state.lat, state.lon), toENU = (v) => new THREE.Vector3(v[0] * B.e[0] + v[1] * B.e[1] + v[2] * B.e[2], v[0] * B.n[0] + v[1] * B.n[1] + v[2] * B.n[2], v[0] * B.u[0] + v[1] * B.u[1] + v[2] * B.u[2]);
-  const zE = toENU([0, 0, 1]).normalize();
-  const m = new THREE.Vector3(...o.earth).negate();          // Earth -> site
+  earthUniforms.sunL.value.copy(localUniforms.sun.value);
+  if (F) { earthSky.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(toENU(F.x), toENU(F.y), toENU(F.z))); return; }
+  // sem o ponto sub-Lua (tabelas Apollo): o sub-Lua aproximado olha para a Lua e o polo da Terra vira o da Lua (só visual)
+  if (!g.subMoon) { earthSky.quaternion.identity(); return; }
+  const zE = toENU([0, 0, 1]).normalize(), m = new THREE.Vector3(...o.earth).negate();
   const mp = m.clone().sub(zE.clone().multiplyScalar(m.dot(zE))).normalize();
   const xE = mp.clone().applyAxisAngle(zE, -g.subMoon.lon * D2R), yE = zE.clone().cross(xE);
   earthSky.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xE, yE, zE));
-  earthUniforms.sunL.value.copy(localUniforms.sun.value);
 }
 function readSky(o) {
   const P = state.patch && state.mode === 'local' ? state.patch : null;
@@ -218,16 +225,20 @@ function readSky(o) {
   $('rSun').innerHTML = `az ${o.sunAE.az.toFixed(2)}°, el ${o.sunAE.el.toFixed(3)}°` + (sv ? `<br>terrain horizon ${sv.horizon.toFixed(2)}° → disc visible <b>${(100 * sv.frac).toFixed(0)}%</b>` : '');
   $('rEarth').innerHTML = `az ${o.earthAE.az.toFixed(2)}°, el ${o.earthAE.el.toFixed(3)}°, ${Math.round(o.earthKm).toLocaleString('en')} km` + (ev ? `<br>terrain horizon ${ev.horizon.toFixed(2)}° → disc visible <b>${(100 * ev.frac).toFixed(0)}%</b>` : '');
 }
-let shadeTimer = null;
+// sombras: um pedido por vez ao worker. Durante o play os pedidos não se acumulam (o worker sempre recebe o instante mais recente).
+const shade = { busy: false, pending: false, timer: 0 };
+function requestShade() {
+  if (state.mode !== 'local' || !state.patch || state.building) return;
+  if (shade.busy) { shade.pending = true; return; }
+  shade.busy = true; shade.pending = false;
+  const o = topoCentre(); worker.postMessage({ type: 'shade', id: state.patch.id, sun: o.sun, earth: o.earth, earthHalf: o.earthHalfDeg });
+}
 function setTime(t) {
   const r = eph.range(); const inA = t >= r.a[0] && t <= r.a[1], inB = t >= r.b[0] && t <= r.b[1];
   if (!inA && !inB) t = Math.max(r.a[0], Math.min(r.a[1], t));
   state.t = t; updateSky();
   $('tinput').value = new Date(t).toISOString().slice(0, 16);
-  if (state.mode === 'local' && state.patch && !state.building) {
-    clearTimeout(shadeTimer);
-    shadeTimer = setTimeout(() => { const o = topoCentre(); worker.postMessage({ type: 'shade', id: state.patch.id, sun: o.sun, earth: o.earth, earthHalf: o.earthHalfDeg }); }, state.playing ? 0 : 60);
-  }
+  if (state.playing) requestShade(); else { clearTimeout(shade.timer); shade.timer = setTimeout(requestShade, 40); }
 }
 
 // ------------------------------------------------------------------ patches
@@ -247,13 +258,18 @@ worker.onmessage = (ev) => {
   if (m.type === 'patch') {
     state.building = false;
     if (m.id !== state.patchId) { if (state.queued) requestPatch(); return; }
-    buildMesh(m); state.patch = m; updateSky(); readLayers(m); dispatchEvent(new CustomEvent('lunite:patch'));
+    buildMesh(m); state.patch = m; updateSky(); readLayers(m); invalidate(); dispatchEvent(new CustomEvent('lunite:patch'));
+    if (shade.pending) requestShade();
     msg(`Patch ${fmtKm(m.W)} · ${m.N}×${m.N} samples · spacing ${m.spacing.toFixed(1)} m · ${m.ms.toFixed(0)} ms · ${m.tiles} tiles / ${(m.bytes / 1e6).toFixed(1)} MB downloaded so far`);
     if (state.queued) requestPatch();
   }
-  if (m.type === 'shade' && state.patch && m.id === state.patch.id) {
-    terrain.geometry.getAttribute('vis').array.set(m.vis); terrain.geometry.getAttribute('vis').needsUpdate = true;
-    state.patch.sunCentre = m.sunCentre; state.patch.earthCentre = m.earthCentre; readSky(topoCentre());
+  if (m.type === 'shade') {
+    shade.busy = false;
+    if (state.patch && m.id === state.patch.id && terrain) {
+      terrain.geometry.getAttribute('vis').array.set(m.vis); terrain.geometry.getAttribute('vis').needsUpdate = true;
+      state.patch.sunCentre = m.sunCentre; state.patch.earthCentre = m.earthCentre; readSky(topoCentre()); invalidate();
+    }
+    if (shade.pending) requestShade();
   }
 };
 function buildMesh(m) {
@@ -315,11 +331,11 @@ function enterLocal(lat, lon, level, view) {
   camera.near = W / 4000; camera.far = W * 60; camera.updateProjectionMatrix();
   const v = view || [0, -0.75 * W, 0.45 * W];
   camera.position.set(...v); controls.target.set(0, 0, 0); controls.minDistance = 30; controls.maxDistance = W * 2.5;
-  $('mode').textContent = 'Terrain'; document.body.classList.add('local'); dispatchEvent(new CustomEvent('lunite:mode'));
+  $('mode').textContent = 'Terrain'; document.body.classList.add('local'); invalidate(); dispatchEvent(new CustomEvent('lunite:mode'));
   requestPatch(); updateSky();
 }
 function enterGlobe() {
-  state.mode = 'globe'; document.body.classList.remove('local'); $('mode').textContent = 'Globe'; dispatchEvent(new CustomEvent('lunite:mode'));
+  state.mode = 'globe'; document.body.classList.remove('local'); $('mode').textContent = 'Globe'; invalidate(); dispatchEvent(new CustomEvent('lunite:mode'));
   camera.near = 0.005; camera.far = 100; camera.updateProjectionMatrix();
   const u = new THREE.Vector3(...unit(state.lat, state.lon));
   camera.position.copy(u.multiplyScalar(3.4)); controls.target.set(0, 0, 0); controls.minDistance = 1.02; controls.maxDistance = 12;
@@ -334,6 +350,7 @@ function showSite(s) {
   $('siteCard').hidden = false;
 }
 controls.addEventListener('change', () => {
+  invalidate();
   if (state.mode === 'globe') {
     const d = camera.position.length();
     if (d < 1.09) {   // close to the surface: switch to real terrain under the screen centre
@@ -389,9 +406,13 @@ function wireUI() {
   $('overlay').onchange = (e) => {
     state.overlay = e.target.value; localUniforms.overlay.value = { none: 0, sun: 1, earth: 2, layers: 3 }[state.overlay];
     if (state.patch && terrain) { const a = state.overlay === 'earth' ? state.patch.nasaEarth : state.patch.nasaSun; if (a) { terrain.geometry.getAttribute('nasa').array.set(a); terrain.geometry.getAttribute('nasa').needsUpdate = true; } }
+    invalidate();
   };
-  $('shadows').onchange = (e) => { localUniforms.shadows.value = e.target.checked ? 1 : 0; };
-  $('expo').oninput = (e) => { globeUniforms.exposure.value = localUniforms.exposure.value = +e.target.value; };
+  $('shadows').onchange = (e) => { localUniforms.shadows.value = e.target.checked ? 1 : 0; invalidate(); };
+  $('expo').oninput = (e) => {   // exposição em EV (passos de 2x), como numa câmera: EV +12 a +14 mostra a luz da Terra no lado noturno
+    const v = +e.target.value, k = 2 ** v; $('expoV').textContent = (v > 0 ? '+' : '') + v;
+    globeUniforms.exposure.value = localUniforms.exposure.value = earthUniforms.exposure.value = earthGlobeUniforms.exposure.value = k; invalidate();
+  };
   $('tinput').onchange = (e) => { const t = Date.parse(e.target.value + ':00Z'); if (!isNaN(t)) setTime(t); };
   const step = (d) => () => setTime(state.t + d * 1000);
   $('tm1d').onclick = step(-86400); $('tm1h').onclick = step(-3600); $('tp1h').onclick = step(3600); $('tp1d').onclick = step(86400);
@@ -420,13 +441,85 @@ async function runValidation() {
     `</table><div class="dim">Our 3 h table + interpolation + parallax vs. Horizons' own topocentric answers (${r[0].n} epochs each, Nov–Dec 2026).</div>`;
 }
 
+// ------------------------------------------------------------------ setas do Sol e da Terra + foco da câmera
+// Cada astro tem uma etiqueta: sobre ele quando está na tela, ou uma seta na borda apontando para onde ele está.
+// Clicar anima a câmera até enquadrar o astro (no terreno: o horizonte com o astro acima; no globo: a Lua e o astro).
+const bodies = { sun: { el: $('arrSun') }, earth: { el: $('arrEarth') } };
+let camAnim = null;
+function bodyWorld(k) { return state.mode === 'local' ? (k === 'sun' ? sunSky : earthSky).position : (k === 'sun' ? sunGlobe : earthGlobe).position; }
+// área da tela não coberta pelos painéis (as setas de borda ficam dentro dela)
+function freeRect() {
+  const w = canvas.clientWidth, h = canvas.clientHeight, R = { l: 8, r: w - 8, t: 44, b: h - 8 };
+  const vis = (el) => el && el.getClientRects().length > 0 && getComputedStyle(el).display !== 'none';   // (offsetParent é null em painéis fixos)
+  const L = $('left'), Rt = $('right'), Bt = $('bottom');
+  if (vis(L) && L.getBoundingClientRect().width < w * 0.5) R.l = L.getBoundingClientRect().right + 8;
+  if (vis(Rt) && Rt.getBoundingClientRect().width < w * 0.5) R.r = Rt.getBoundingClientRect().left - 8;
+  if (vis(Bt)) R.b = Bt.getBoundingClientRect().top - 8;
+  if (R.r - R.l < 260) { R.l = 8; R.r = w - 8; }   // tela estreita: usa a largura toda
+  return R;
+}
+function placeBodies() {
+  const w = canvas.clientWidth, h = canvas.clientHeight, o = state.mode === 'local' && state.patch ? topoCentre() : null;
+  for (const k of ['sun', 'earth']) {
+    const B = bodies[k], el = B.el, p = bodyWorld(k).clone().applyMatrix4(camera.matrixWorldInverse);
+    const ndc = bodyWorld(k).clone().project(camera), front = p.z < 0, on = front && Math.abs(ndc.x) < 0.96 && Math.abs(ndc.y) < 0.92;
+    let x, y;
+    if (on) { x = (ndc.x + 1) / 2 * w + 14; y = (1 - ndc.y) / 2 * h - 12; el.style.setProperty('--a', '0deg'); }
+    else {   // seta na borda, na direção do astro (se estiver atrás da câmera, aponta para o lado em que é preciso girar)
+      const R = freeRect(), a = Math.atan2(p.y, p.x), cx = (R.l + R.r) / 2, cy = (R.t + R.b) / 2, mx = (R.r - R.l) / 2 - 75, my = (R.b - R.t) / 2 - 22;
+      const t = Math.min(Math.abs(mx / (Math.cos(a) || 1e-9)), Math.abs(my / (Math.sin(a) || 1e-9)));
+      x = cx + Math.cos(a) * t - 45; y = cy - Math.sin(a) * t - 16;
+      el.querySelector('svg').style.transform = `rotate(${-a}rad)`;
+    }
+    el.classList.toggle('onscreen', on);
+    const ae = o ? (k === 'sun' ? o.sunAE : o.earthAE) : null;
+    el.classList.toggle('below', !!ae && ae.el < 0);
+    el.querySelector('small').textContent = ae ? (ae.el < 0 ? 'abaixo do horizonte' : `elevação ${ae.el.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}°`) : '';
+    el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+    el.hidden = false;
+  }
+}
+function focusBody(k) {
+  const fromP = camera.position.clone(), fromT = controls.target.clone();
+  let toP, toT;
+  if (state.mode === 'local' && state.patch) {
+    const o = topoCentre(), dir = new THREE.Vector3(...(k === 'sun' ? o.sun : o.earth)).normalize();
+    const el = Math.asin(dir.z), hz = new THREE.Vector3(dir.x, dir.y, 0).normalize(), d = camera.position.distanceTo(controls.target);
+    const elV = Math.max(-35 * D2R, Math.min(60 * D2R, el - 10 * D2R));   // o astro fica ~10° acima do centro da tela
+    const v = hz.clone().multiplyScalar(Math.cos(elV)).add(new THREE.Vector3(0, 0, Math.sin(elV)));
+    const zc = state.patch.zc || 0, lift = Math.max(0, d * (Math.sin(elV) + 0.06));   // astro alto: sobe o alvo para a câmera não entrar no chão
+    toT = new THREE.Vector3(0, 0, zc + lift); toP = toT.clone().sub(v.multiplyScalar(d));
+  } else {
+    const dir = bodyWorld(k).clone().normalize(), right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+    right.sub(dir.clone().multiplyScalar(right.dot(dir))).normalize();
+    toT = new THREE.Vector3(); toP = dir.clone().multiplyScalar(-6).add(right.multiplyScalar(3));   // a Lua na frente, o astro ao lado do limbo
+  }
+  camAnim = { t0: performance.now(), dur: 900, fromP, fromT, toP, toT };
+}
+bodies.sun.el.onclick = () => focusBody('sun');
+bodies.earth.el.onclick = () => focusBody('earth');
+function stepCamAnim(now) {
+  const A = camAnim, k = Math.min(1, (now - A.t0) / A.dur), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+  controls.target.lerpVectors(A.fromT, A.toT, e);
+  // interpola a direção em arco (não em linha reta) e a distância, em volta do alvo
+  const a = A.fromP.clone().sub(A.fromT), b = A.toP.clone().sub(A.toT), la = a.length(), lb = b.length();
+  const q = new THREE.Quaternion().setFromUnitVectors(a.clone().normalize(), b.clone().normalize());
+  const dirv = a.normalize().applyQuaternion(new THREE.Quaternion().slerp(q, e));
+  camera.position.copy(controls.target).add(dirv.multiplyScalar(la + (lb - la) * e));
+  if (k >= 1) camAnim = null;
+}
+
 let last = performance.now();
 function loop(now) {
   const dt = (now - last) / 1000; last = now;
   if (state.playing) setTime(state.t + dt * state.speed * 1000);
-  controls.update();
-  renderer.render(state.mode === 'globe' ? globeScene : localScene, camera);
-  placeLabels();
+  if (camAnim) { stepCamAnim(now); invalidate(); }
+  if (controls.update()) invalidate();
+  if (dirty > 0 || state.playing) {   // só redesenha quando algo mudou
+    renderer.render(state.mode === 'globe' ? globeScene : localScene, camera);
+    placeLabels(); placeBodies();
+    dirty--;
+  }
   requestAnimationFrame(loop);
 }
 
@@ -440,14 +533,13 @@ async function main() {
   const tl = new THREE.TextureLoader();
   moonTex = await tl.loadAsync(BASE + 'textures/moon_color_4k.jpg'); moonTex.wrapS = THREE.RepeatWrapping;
   globeUniforms.colorTex.value = localUniforms.colorTex.value = moonTex;
-  earthUniforms.day.value = await tl.loadAsync(BASE + 'textures/earth_day_2k.jpg');
-  earthUniforms.night.value = await tl.loadAsync(BASE + 'textures/earth_night_2k.jpg');
-  earthGlobe.material = new THREE.MeshBasicMaterial({ map: earthUniforms.day.value });
+  earthUniforms.day.value = earthGlobeUniforms.day.value = await tl.loadAsync(BASE + 'textures/earth_day_2k.jpg');
+  earthUniforms.night.value = earthGlobeUniforms.night.value = await tl.loadAsync(BASE + 'textures/earth_night_2k.jpg');
   await loadGlobeSlopes();
   for (const s of SITES) s._label = siteLabel(s);
   wireUI(); dataSummary();
-  initMission({ sites: SITES, goSite, home: () => enterGlobe(), mode: () => state.mode, goTo: (lat, lon) => enterLocal(lat, lon, 5), pick: pickLatLon, setTime, time: () => state.t });
-  initAnalysis({ THREE, scene: localScene, camera, canvas, eph, setTime, base: BASE, sites: SITES, frame: () => ({ lat: state.lat, lon: state.lon, exag: state.exag, mode: state.mode }) });
+  initMission({ sites: SITES, goSite, home: () => { camAnim = null; state.lat = -60; state.lon = 20; enterGlobe(); }, mode: () => state.mode, goTo: (lat, lon) => enterLocal(lat, lon, 5), pick: pickLatLon, setTime, time: () => state.t });
+  initAnalysis({ THREE, scene: localScene, camera, canvas, eph, setTime, invalidate, base: BASE, sites: SITES, frame: () => ({ lat: state.lat, lon: state.lon, exag: state.exag, mode: state.mode }) });
   state.lat = -60; state.lon = 20; enterGlobe(); setTime(state.t);
   runValidation();
   msg('Ready. Drag to rotate, scroll to zoom, double-click to open the terrain there, or pick a curated site.');

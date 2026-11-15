@@ -10,12 +10,12 @@
 // Tudo é medido no referencial leste-norte-cima do centro da área (o mesmo do patch do app.js): alturas z incluem a
 // curvatura da Lua, então "o Sol está acima do horizonte" vira comparar inclinações nesse referencial.
 import { Store, aeqdInv } from './tiles.js';
-import { makeSampler, positions, zAt } from './terrain-grid.js?v=20261115c';
+import { makeSampler, positions, zAt } from './terrain-grid.js?v=20261115d';
 
 const NA = 360;               // azimutes do perfil de horizonte (1°)
 const MAX_POINTS = 3000;      // acima disso o espaçamento dos candidatos aumenta
 const CHUNK = 120;            // pontos por lote enviado à página
-const STRIDE = 10;            // lat, lon, h, slope, sunPct, commPct, maxDarkH, maxBlackH, flags, dist
+const STRIDE = 11;            // lat, lon, h, slope, sunPct, commPct, maxDarkH, maxBlackH, flags, dist, índice do candidato
 
 let store = null, sampler = null, current = 0;
 
@@ -29,7 +29,9 @@ function hAt(G, e, n) {   // altura LOLA (m) bilinear, NaN fora da grade
 async function run(m) {
   const id = m.id, t0 = performance.now();
   const cancelled = () => id !== current;
-  const prog = (stage, f) => postMessage({ type: 'progress', id, stage, f });
+  // vários workers dividem os candidatos: este fica com os índices c ≡ part (mod parts), intercalados para manter a ordem do centro para fora
+  const part = m.part || 0, parts = m.parts || 1;
+  const prog = (stage, f) => postMessage({ type: 'progress', id, part, stage, f });
 
   // ---- candidatos: malha quadrada dentro do círculo, do centro para fora
   let sp = Math.max(m.spacingM, 1);
@@ -52,7 +54,7 @@ async function run(m) {
   for (const G of [F, M, C]) G.z = positions(G, m.lat, m.lon, 1).z;
   let zMax = -1e9; for (const G of [F, M, C]) for (const v of G.z) if (v > zMax) zMax = v;
   const grids = [F, M, C];
-  { // círculo da área de busca, com as alturas do relevo, para a página desenhar
+  if (part === 0) { // círculo da área de busca, com as alturas do relevo, para a página desenhar
     const ring = new Float64Array(256 * 3);
     for (let i = 0; i < 256; i++) { const a = 2 * Math.PI * i / 256, e = m.radiusM * Math.sin(a), n = m.radiusM * Math.cos(a); const [la, lo] = aeqdInv(m.lat, m.lon, e, n); ring.set([la, lo, hAt(F, e, n)], 3 * i); }
     postMessage({ type: 'ring', id, ring }, [ring.buffer]);
@@ -77,12 +79,13 @@ async function run(m) {
   let out = [];
   const flush = (last) => {
     const a = new Float64Array(out.length * STRIDE); out.forEach((r, i) => a.set(r, i * STRIDE));
-    postMessage({ type: 'chunk', id, pts: a, counts: { ...counts }, done: last, spacing: sp, steps: nW, ms: performance.now() - t0 }, [a.buffer]);
+    postMessage({ type: 'chunk', id, part, pts: a, counts: { ...counts, total: cand.length }, done: last, spacing: sp, steps: nW, ms: performance.now() - t0 }, [a.buffer]);
     out = [];
   };
 
   // visibilidade (0/1) por ponto e por instante, no período todo
-  const visSun = new Uint8Array(cand.length * n), visCom = new Uint8Array(cand.length * n), slopes = new Float32Array(cand.length);
+  const mine = []; for (let c = part; c < cand.length; c += parts) mine.push(c);
+  const visSun = new Uint8Array(mine.length * n), visCom = new Uint8Array(mine.length * n), slopes = new Float32Array(mine.length);
   const nW = m.nW;
   function windowMetrics(c, k0) {   // % de Sol, % de comunicação, maior escuridão (h), maior apagão (h) na janela [k0, k0 + nW)
     const sv = visSun.subarray(c * n + k0, c * n + k0 + nW), cv = visCom.subarray(c * n + k0, c * n + k0 + nW);
@@ -94,13 +97,13 @@ async function run(m) {
     return [100 * sunN / nW, 100 * comN / nW, maxDark * m.stepH, maxBlack * m.stepH];
   }
   const judge = (sunPct, commPct, darkH, blackH) => (sunPct >= T.minSunPct && darkH <= T.maxDarkH ? 2 : 0) | (commPct >= T.minCommPct && blackH <= T.maxBlackoutH ? 4 : 0);
-  for (let c = 0; c < cand.length; c++) {
-    const [e0, n0, dist] = cand[c];
+  for (let j = 0; j < mine.length; j++) {
+    const c = mine[j], [e0, n0, dist] = cand[c];
     const [lat, lon] = latLonAt(F, e0, n0);
     const h0 = hAt(F, e0, n0), z0 = zAt(F, e0, n0);
     // 1) inclinação (gradiente central sobre ±dSlope)
     const gx = (hAt(F, e0 + dSlope, n0) - hAt(F, e0 - dSlope, n0)) / (2 * dSlope), gy = (hAt(F, e0, n0 + dSlope) - hAt(F, e0, n0 - dSlope)) / (2 * dSlope);
-    const slope = Math.atan(Math.hypot(gx, gy)) * 180 / Math.PI; slopes[c] = slope;
+    const slope = Math.atan(Math.hypot(gx, gy)) * 180 / Math.PI; slopes[j] = slope;
     let flags = 0, sunPct = NaN, commPct = NaN, darkH = NaN, blackH = NaN;
     if (slope <= m.slopeMax) {
       flags |= 1; counts.slope++;
@@ -117,43 +120,41 @@ async function run(m) {
         profP[a] = mP; profA[a] = mA;
       }
       // 3) visibilidade em todo o período (janela inicial + atraso máximo), guardada para arrastar a janela depois
-      const sv = visSun.subarray(c * n, (c + 1) * n), cv = visCom.subarray(c * n, (c + 1) * n);
+      const sv = visSun.subarray(j * n, (j + 1) * n), cv = visCom.subarray(j * n, (j + 1) * n);
       for (let k = 0; k < n; k++) { sv[k] = sTan[k] > at(profP, sAz[k]) ? 1 : 0; cv[k] = m.ok[k] && eTan[k] > at(profA, eAz[k]) ? 1 : 0; }
-      [sunPct, commPct, darkH, blackH] = windowMetrics(c, 0);
+      [sunPct, commPct, darkH, blackH] = windowMetrics(j, 0);
       const f = judge(sunPct, commPct, darkH, blackH); flags |= f;
       if (f & 2) counts.sun++; if (f & 4) counts.earth++; if (flags === 7) counts.valid++;
     }
-    out.push([lat, lon, h0, slope, sunPct, commPct, darkH, blackH, flags, dist]);
+    out.push([lat, lon, h0, slope, sunPct, commPct, darkH, blackH, flags, dist, c]);
     if (out.length >= CHUNK) {
-      flush(false); prog('pontos', (c + 1) / cand.length);
+      flush(false); prog('pontos', (j + 1) / mine.length);
       await new Promise((r) => setTimeout(r, 0));   // deixa chegar um pedido novo (cancelamento)
       if (cancelled()) return;
     }
   }
   flush(true);
 
-  // ---- etapa 3: arrastar a janela de tempo, um dia por vez, dentro do atraso máximo
-  const N = cand.length, hints = { slopeOk: counts.slope, minSlope: Infinity, bestSun: -1, bestDark: Infinity, bestComm: -1, bestBlack: Infinity };
+  // ---- etapa 3: arrastar a janela de tempo, um dia por vez, dentro do atraso máximo (cada worker avalia os seus pontos;
+  //      a página junta as partes de cada janela e escolhe a melhor)
+  const N = mine.length, hints = { slopeOk: counts.slope, minSlope: Infinity, bestSun: -1, bestDark: Infinity, bestComm: -1, bestBlack: Infinity };
   for (const s of slopes) if (s < hints.minSlope) hints.minSlope = s;
-  let best = -1, bestValid = 0, bestScore = -1;
   for (let o = 0; o < m.nOff; o++) {
     const met = new Float32Array(4 * N).fill(NaN), fl = new Uint8Array(N);
     let valid = 0, sum = 0, sunOk = 0, earthOk = 0;
-    for (let c = 0; c < N; c++) {
-      if (!(slopes[c] <= m.slopeMax)) continue;
-      const r = windowMetrics(c, o * m.dStep); met.set(r, 4 * c);
-      const f = 1 | judge(...r); fl[c] = f;
+    for (let j = 0; j < N; j++) {
+      if (!(slopes[j] <= m.slopeMax)) continue;
+      const r = windowMetrics(j, o * m.dStep); met.set(r, 4 * j);
+      const f = 1 | judge(...r); fl[j] = f;
       if (f & 2) sunOk++; if (f & 4) earthOk++;
       if (f === 7) { valid++; sum += (r[0] + r[1]) / 2; }
       if (r[0] > hints.bestSun) hints.bestSun = r[0]; if (r[2] < hints.bestDark) hints.bestDark = r[2];
       if (r[1] > hints.bestComm) hints.bestComm = r[1]; if (r[3] < hints.bestBlack) hints.bestBlack = r[3];
     }
-    const score = valid ? sum / valid : 0;
-    if (valid > bestValid || (valid === bestValid && valid > 0 && score > bestScore)) { best = o; bestValid = valid; bestScore = score; }
-    postMessage({ type: 'window', id, o, valid, score, sunOk, earthOk, met, fl }, [met.buffer, fl.buffer]);
+    postMessage({ type: 'window', id, part, parts, o, valid, sum, sunOk, earthOk, met, fl }, [met.buffer, fl.buffer]);
     if (o % 8 === 7) { await new Promise((r) => setTimeout(r, 0)); if (cancelled()) return; }
   }
-  postMessage({ type: 'sweep', id, best, hints });
+  postMessage({ type: 'sweep', id, part, hints });
 }
 
 function latLonAt(F, e, n) {   // lat/lon do ponto (e, n) da grade fina (bilinear nas colunas lat/lon da grade)

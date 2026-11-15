@@ -136,6 +136,15 @@ body.analyzing.local #right > :not(#anPanel){display:none !important}
 .an-loosen{margin:6px 0;padding-left:16px;display:grid;gap:4px;color:var(--text)}
 .mf-row.mf-warn{box-shadow:inset 2px 0 0 var(--err);padding-left:6px;background:rgba(255,123,123,.06)}
 .mf-row.mf-warn label{color:var(--err)}
+/* setas do Sol e da Terra (clique foca a câmera) */
+.body-arrow{position:fixed;left:0;top:0;z-index:4;display:flex;align-items:center;gap:6px;padding:5px 8px 5px 6px;background:rgba(6,8,12,.72);border:1px solid currentColor;border-radius:14px;font:600 11px var(--sans);letter-spacing:.04em;cursor:pointer;will-change:transform;white-space:nowrap}
+.body-arrow svg{width:15px;height:15px;flex:none}
+.body-arrow small{display:block;font:400 10px var(--mono);letter-spacing:0;opacity:.8}
+.body-arrow span{line-height:1.15}
+.body-arrow.sun{color:#ffc84a} .body-arrow.earth{color:#7fb6ff}
+.body-arrow:hover{background:rgba(20,24,32,.9)}
+.body-arrow.onscreen svg{display:none}
+.body-arrow.below{opacity:.6}
 #anTip{position:fixed;left:0;top:0;z-index:5;pointer-events:none;display:grid;gap:2px;background:rgba(6,8,12,.9);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font:11px var(--mono);will-change:transform}
 #anTip .sun{color:#ffc84a} #anTip .earth{color:#7fb6ff} #anTip .score{color:#5fd585}
 @media (max-width:760px){
@@ -166,6 +175,8 @@ body.analyzing.local #right > :not(#anPanel){display:none !important}
   <div id="siteList" hidden></div>
 </aside>
 <div id="reticle" hidden></div>
+<button type="button" class="body-arrow sun" id="arrSun" hidden aria-label="Focar a câmera no Sol"><svg viewBox="0 0 16 16"><path d="M3 8h9M8 3.5 12.5 8 8 12.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><span>Sol<small></small></span></button>
+<button type="button" class="body-arrow earth" id="arrEarth" hidden aria-label="Focar a câmera na Terra"><svg viewBox="0 0 16 16"><path d="M3 8h9M8 3.5 12.5 8 8 12.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><span>Terra<small></small></span></button>
 <div id="anTip" hidden></div>
 
 <aside id="right" class="panel">
@@ -207,14 +218,14 @@ body.analyzing.local #right > :not(#anPanel){display:none !important}
   <select id="overlay" title="Overlay"><option value="none">No overlay</option><option value="sun">NASA avg Sun visibility</option><option value="earth">NASA avg Earth visibility</option><option value="layers">Data resolution</option></select>
   <select id="exag" title="Vertical exaggeration"><option value="1" selected>Relief ×1</option><option value="2">×2</option><option value="4">×4</option></select>
   <label class="tog"><input type="checkbox" id="shadows" checked>Cast shadows</label>
-  <label class="tog">Exposure <input type="range" id="expo" min="0.3" max="4" step="0.05" value="1" style="width:70px"></label>
+  <label class="tog" title="Exposição em EV, como numa câmera. Suba para +12 a +14 para ver o lado noturno iluminado pela Terra.">Exposure <input type="range" id="expo" min="-3" max="14" step="0.5" value="0" style="width:90px"><span id="expoV" class="dim" style="font-family:var(--mono);min-width:26px">0</span> EV</label>
 </div>
 <div id="status">Loading…</div>
-<script type="module" src="js/app.js?v=20261115c"></script>
+<script type="module" src="js/app.js?v=20261115d"></script>
 <script>
   // Se o navegador carregou um app.js antigo (cache), o formulário nunca aparece: avisa em vez de ficar "Carregando…"
   addEventListener('load', function () {
-    if (window.LUNITE_BUILD === '20261115c') return;
+    if (window.LUNITE_BUILD === '20261115d') return;
     var b = document.getElementById('mfBody');
     if (b) b.innerHTML = '<div class="mf-err">Os arquivos JavaScript estão desatualizados (cache do navegador ou arquivos não substituídos). Recarregue com <b>Ctrl+Shift+R</b>. Se continuar, confira se a pasta <code>js/</code> tem <code>mission.js</code> e <code>analysis.js</code>.</div>';
   });
