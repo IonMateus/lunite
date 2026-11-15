@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Last Light Data Viewer</title>
+<meta name="description" content="Checks the Last Light data pack: LOLA terrain that refines as you zoom, Sun and Earth from JPL Horizons, the 20 curated landing sites.">
+<style>
+:root{
+  --bg:#000; --panel:rgba(10,12,16,.82); --line:rgba(255,255,255,.10); --text:#e8ecf1; --dim:#8b95a3; --accent:#7fd4ff; --past:#ffc36b; --future:#8affc1; --err:#ff7b7b;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){ --panel:rgba(10,12,16,.86); } }
+:root[data-theme="dark"]{ --panel:rgba(10,12,16,.82); }
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:13px/1.45 var(--sans);overflow:hidden}
+#view{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.pin{position:absolute;left:0;top:0;pointer-events:auto;background:none;border:0;padding:0;color:var(--text);font:11px var(--sans);display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;margin:-5px 0 0 -5px}
+.pin i{width:10px;height:10px;border-radius:50%;border:2px solid var(--past);background:rgba(0,0,0,.4);flex:none}
+.pin.future i{border-color:var(--future);border-radius:2px;transform:rotate(45deg)}
+.pin span{background:rgba(0,0,0,.55);padding:1px 5px;border-radius:3px;opacity:.85}
+.pin:hover span{opacity:1;color:#fff}
+header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:10px;padding:10px 14px;pointer-events:none}
+header h1{font:600 14px var(--sans);letter-spacing:.08em;text-transform:uppercase;margin:0}
+header .chip{font:11px var(--mono);color:var(--accent);border:1px solid var(--line);border-radius:10px;padding:1px 8px}
+header button{pointer-events:auto}
+.panel{position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:8px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#left{top:46px;left:12px;width:300px;max-height:calc(100% - 150px);overflow:auto;padding:8px}
+#right{top:46px;right:12px;width:330px;max-height:calc(100% - 150px);overflow:auto;padding:10px 12px}
+h2{font:600 11px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:10px 0 4px}
+h2:first-child{margin-top:2px}
+.srow{display:grid;grid-template-columns:22px 1fr auto 38px;gap:6px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:var(--text);padding:5px 4px;font:12px var(--sans);cursor:pointer}
+.srow:hover{background:rgba(255,255,255,.05)}
+.rk{color:var(--dim);font-family:var(--mono)}
+.res{color:var(--dim);font:11px var(--mono);text-align:right}
+.tag{font:10px var(--mono);padding:0 5px;border-radius:7px;border:1px solid}
+.tag.past{color:var(--past)} .tag.future{color:var(--future)}
+.read{font:12px var(--mono)}
+.read b{color:var(--accent)}
+.dim{color:var(--dim);font-size:11px}
+table{border-collapse:collapse;width:100%;font:11px var(--mono)}
+td,th{padding:2px 4px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--dim);font-weight:500}
+#siteCard{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
+#siteCard h3{margin:2px 0 4px;font-size:13px}
+#siteCard p{margin:3px 0}
+a{color:var(--accent)}
+#bottom{left:50%;transform:translateX(-50%);bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;max-width:calc(100% - 24px)}
+button.b,select,input[type=datetime-local]{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line);border-radius:5px;padding:4px 8px;font:12px var(--sans);min-height:28px}
+button.b:hover{background:rgba(255,255,255,.12)}
+input[type=datetime-local]{font-family:var(--mono);color-scheme:dark}
+#tlabel{font:12px var(--mono);color:var(--accent)}
+#tsrc{font-size:10px;color:var(--dim)}
+label.tog{display:flex;align-items:center;gap:4px;font-size:12px}
+#status{position:fixed;left:50%;transform:translateX(-50%);top:12px;max-width:min(560px,calc(100% - 24px));font:11px var(--mono);color:var(--dim);background:rgba(0,0,0,.5);padding:4px 8px;border-radius:4px;pointer-events:none}
+#status.busy{color:var(--accent)} #status.err{color:var(--err)}
+.local-only{display:none} body.local .local-only{display:inline-flex}
+#panelToggle{display:none}
+@media (max-width:760px){
+  #left,#right{display:none;left:8px;right:8px;width:auto;top:44px;max-height:42vh}
+  #right{top:auto;bottom:118px}
+  body.panels #left, body.panels #right{display:block}
+  #panelToggle{display:inline-block}
+  #bottom{bottom:8px;left:8px;right:8px;transform:none;max-width:none;gap:4px;padding:6px}
+  #status{top:40px;left:8px;transform:none}
+  .pin span{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="labels"></div>
+<header>
+  <h1>Last Light · data viewer</h1><span class="chip" id="mode">Globe</span>
+  <button class="b" id="panelToggle">Panels</button>
+</header>
+
+<aside id="left" class="panel">
+  <h2>Curated sites (20)</h2>
+  <div class="dim" style="margin-bottom:4px">● past landing &nbsp; ◆ future candidate · last column = 0–5 km resolution</div>
+  <div id="siteList"></div>
+  <div id="siteCard" hidden></div>
+</aside>
+
+<aside id="right" class="panel">
+  <h2>Where</h2><div class="read" id="rWhere">Globe view</div>
+  <h2>Sun (from this point)</h2><div class="read" id="rSun"></div>
+  <h2>Earth (from this point)</h2><div class="read" id="rEarth"></div>
+  <h2>Terrain data in view</h2><div class="read" id="rLayers"><span class="dim">Open a terrain patch to see which LOLA layers are used.</span></div>
+  <h2>Ephemeris check vs. Horizons</h2><div class="read" id="rValid">computing…</div>
+  <h2>Data pack</h2><div class="read" id="rData"></div>
+  <div class="dim" style="margin-top:8px">Heights: NASA LOLA (PDS), lossless tiles. Sun/Earth: JPL Horizons DE441. Overlay "NASA avg visibility": LOLA illumination maps (85°S–90°S only). Earth's pole orientation in the sky is approximate (visual only).</div>
+</aside>
+
+<div id="bottom" class="panel">
+  <button class="b" id="btnGlobe" title="Back to the globe">Globe</button>
+  <button class="b local-only" id="btnOut" title="Zoom out one level">−</button>
+  <button class="b local-only" id="btnIn" title="Zoom in one level">+</button>
+  <span style="width:6px"></span>
+  <button class="b" id="tm1d">−1d</button><button class="b" id="tm1h">−1h</button>
+  <button class="b" id="tplay" title="Play / pause">▶</button>
+  <select id="tspeed" title="Playback speed"><option value="600">10 min/s</option><option value="3600" selected>1 h/s</option><option value="21600">6 h/s</option><option value="86400">1 day/s</option></select>
+  <button class="b" id="tp1h">+1h</button><button class="b" id="tp1d">+1d</button>
+  <input type="datetime-local" id="tinput" step="60" title="UTC">
+  <span><span id="tlabel"></span><br><span id="tsrc"></span></span>
+  <span style="width:6px"></span>
+  <select id="overlay" title="Overlay"><option value="none">No overlay</option><option value="sun">NASA avg Sun visibility</option><option value="earth">NASA avg Earth visibility</option><option value="layers">Data resolution</option></select>
+  <select id="exag" title="Vertical exaggeration"><option value="1" selected>Relief ×1</option><option value="2">×2</option><option value="4">×4</option></select>
+  <label class="tog"><input type="checkbox" id="shadows" checked>Cast shadows</label>
+  <label class="tog">Exposure <input type="range" id="expo" min="0.3" max="4" step="0.05" value="1" style="width:70px"></label>
+</div>
+<div id="status">Loading…</div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

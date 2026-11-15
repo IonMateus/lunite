@@ -1,0 +1,26 @@
+{
+ "moon_color_4k.jpg": {
+  "description": "NASA SVS 4720 LROC colour mosaic (resized, JPEG; visual only)",
+  "source": {
+   "file": "textures/lroc_color_poles_4k.tif",
+   "url": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_4k.tif",
+   "sha256": "918649a7f8ed2f1329b2cd95bb0d25483befdcb60ae1a66db681a637cc21344f"
+  }
+ },
+ "earth_day_2k.jpg": {
+  "description": "NASA SVS 30763 VIIRS Earth (resized, JPEG; visual only)",
+  "source": {
+   "file": "textures/global_vir_2015287_mosaic_sm.tif",
+   "url": "https://svs.gsfc.nasa.gov/vis/a030000/a030700/a030763/global_vir_2015287_mosaic_sm.tif",
+   "sha256": "e51ba5bad47be7e3f91e26e4e61fd3db6b0be87ab96619e34f6d65776dd7ca92"
+  }
+ },
+ "earth_night_2k.jpg": {
+  "description": "NASA SVS 30876 Black Marble (resized, JPEG; visual only)",
+  "source": {
+   "file": "textures/BlackMarble_2016_global_7km.png",
+   "url": "https://svs.gsfc.nasa.gov/vis/a030000/a030800/a030876/BlackMarble_2016_global_7km.png",
+   "sha256": "4f2f0a4ef6a73642c3a7920f512a2252adb45bd33dcb2fce1f80d7dd28015447"
+  }
+ }
+}

@@ -1,0 +1,1783 @@
+{
+"generated_utc": "2026-11-15T05:11:46+00:00",
+"radius_m": 1737400.0,
+"height_scale_m": 0.5,
+"tile": 256,
+"layers": [
+{
+"name": "shackleton_core",
+"group": "terrain",
+"kind": "height",
+"width": 2002,
+"height": 2002,
+"tile": 256,
+"ny": 8,
+"nx": 8,
+"wrap": false,
+"tiles_b64": "//////////8=",
+"ntiles": 64,
+"bytes": 1941884,
+"proj": {
+"type": "polar",
+"scale": 5.0,
+"loff": -280.5,
+"soff": -537.5
+},
+"derived": false,
+"note": "Shackleton rim (Peak Near Shackleton): 0-5 km at 5 m; native crop of ldem_875s_5m.img",
+"source": {
+"file": "lola/polar_south/ldem_875s_5m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_875s_5m.img",
+"sha256": "f47a8bf8ca98de0060895d6caa1e81388f851a3ad695f986f4f8c3b541b594c3"
+}
+},
+{
+"name": "shackleton_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1667,
+"height": 1667,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1890998,
+"proj": {
+"type": "polar",
+"scale": 30.0,
+"loff": 619.9092321391995,
+"soff": 576.9918746054425
+},
+"derived": true,
+"note": "Shackleton rim (Peak Near Shackleton): 5-25 km at 30 m, bilinear resample of ldem_80s_20m",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "shackleton_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1668,
+"height": 1669,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 2354146,
+"proj": {
+"type": "polar",
+"scale": 120.0,
+"loff": 780.5,
+"soff": 769.5
+},
+"derived": false,
+"note": "Shackleton rim (Peak Near Shackleton): 25-100 km at 120 m, native crop of ldem_75s_120m",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "im2_core",
+"group": "terrain",
+"kind": "height",
+"width": 502,
+"height": 502,
+"tile": 256,
+"ny": 2,
+"nx": 2,
+"wrap": false,
+"tiles_b64": "Dw==",
+"ntiles": 4,
+"bytes": 140435,
+"proj": {
+"type": "polar",
+"scale": 20.0,
+"loff": 7150.5,
+"soff": -3604.5
+},
+"derived": false,
+"note": "IM-2 Athena: 0-5 km at 20 m; native crop of ldem_80s_20m.img",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "im2_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1667,
+"height": 1667,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1839159,
+"proj": {
+"type": "polar",
+"scale": 30.0,
+"loff": 5433.109008834388,
+"soff": -1736.9413843463224
+},
+"derived": true,
+"note": "IM-2 Athena: 5-25 km at 30 m, bilinear resample of ldem_80s_20m",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "im2_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1669,
+"height": 1668,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 2399684,
+"proj": {
+"type": "polar",
+"scale": 120.0,
+"loff": 1983.5,
+"soff": 191.5
+},
+"derived": false,
+"note": "IM-2 Athena: 25-100 km at 120 m, native crop of ldem_75s_120m",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "shivshakti_r30",
+"group": "terrain",
+"kind": "height",
+"width": 4795,
+"height": 1692,
+"tile": 256,
+"ny": 7,
+"nx": 19,
+"wrap": false,
+"tiles_b64": "/////////////////////x8=",
+"ntiles": 133,
+"bytes": 2980425,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": -70190.5,
+"soff": -30699.5
+},
+"derived": false,
+"note": "Statio Shiv Shakti (Chandrayaan-3): 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_75s_60s_000_030, ldem_1024_75s_60s_030_060",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_75s_60s_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_75s_60s_000_030.img",
+"sha256": "7a7e9611b5bdb008704b3fab60e02347a63a0b8be8ca7408c5f2f5b69e614f03"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_75s_60s_030_060.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_75s_60s_030_060.img",
+"sha256": "3a4a45571d70913ba8c278655315ef1cf4232101e7336f22610d17e47803c214"
+}
+]
+},
+{
+"name": "shivshakti_r120",
+"group": "terrain",
+"kind": "height",
+"width": 4795,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 19,
+"wrap": false,
+"tiles_b64": "/////////////////////x8=",
+"ntiles": 133,
+"bytes": 4450910,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": -16914.5,
+"soff": -5877.5
+},
+"derived": true,
+"note": "Statio Shiv Shakti (Chandrayaan-3): 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_75s_60s_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_75s_60s_000_030.img",
+"sha256": "7a7e9611b5bdb008704b3fab60e02347a63a0b8be8ca7408c5f2f5b69e614f03"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_75s_60s_030_060.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_75s_60s_030_060.img",
+"sha256": "3a4a45571d70913ba8c278655315ef1cf4232101e7336f22610d17e47803c214"
+}
+]
+},
+{
+"name": "im1_core",
+"group": "terrain",
+"kind": "height",
+"width": 502,
+"height": 502,
+"tile": 256,
+"ny": 2,
+"nx": 2,
+"wrap": false,
+"tiles_b64": "Dw==",
+"ntiles": 4,
+"bytes": 119366,
+"proj": {
+"type": "polar",
+"scale": 20.0,
+"loff": 15247.5,
+"soff": -126.5
+},
+"derived": true,
+"note": "IM-1 Odysseus: 0-5 km at 20 m; native crop of ldem_80s_20m.img; 10% of samples outside that file, filled by bilinear upsampling of ldem_75s_120m",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "im1_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1667,
+"height": 1667,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1384424,
+"proj": {
+"type": "polar",
+"scale": 30.0,
+"loff": 10831.301256601428,
+"soff": 582.0040727082538
+},
+"derived": true,
+"note": "IM-1 Odysseus: 5-25 km at 30 m, bilinear resample of ldem_80s_20m (42% from ldem_75s_120m)",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "im1_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1669,
+"height": 1669,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 2405046,
+"proj": {
+"type": "polar",
+"scale": 120.0,
+"loff": 3333.5,
+"soff": 771.5
+},
+"derived": false,
+"note": "IM-1 Odysseus: 25-100 km at 120 m, native crop of ldem_75s_120m",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "apollo17_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1802,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 8,
+"wrap": false,
+"tiles_b64": "/////////w==",
+"ntiles": 56,
+"bytes": 1201198,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": 21519.5,
+"soff": -30611.5
+},
+"derived": false,
+"note": "Apollo 17, Taurus-Littrow: 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_15n_30n_000_030, ldem_1024_15n_30n_030_060",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15n_30n_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15n_30n_000_030.img",
+"sha256": "8f553c2897a8956a0219820a27d3a04b1b7ae53ef17395f259dee99655b4abc2"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_15n_30n_030_060.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15n_30n_030_060.img",
+"sha256": "965e1a592107278eb1ed3f19a84485613d5145a41b04a4cf05f558eabbfaa1c7"
+}
+]
+},
+{
+"name": "apollo17_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1801,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 8,
+"wrap": false,
+"tiles_b64": "/////////w==",
+"ntiles": 56,
+"bytes": 1823346,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": 6013.5,
+"soff": -6978.5
+},
+"derived": true,
+"note": "Apollo 17, Taurus-Littrow: 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15n_30n_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15n_30n_000_030.img",
+"sha256": "8f553c2897a8956a0219820a27d3a04b1b7ae53ef17395f259dee99655b4abc2"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_15n_30n_030_060.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15n_30n_030_060.img",
+"sha256": "965e1a592107278eb1ed3f19a84485613d5145a41b04a4cf05f558eabbfaa1c7"
+}
+]
+},
+{
+"name": "apollo11_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1691,
+"height": 1692,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 858073,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": 1534.5,
+"soff": -23192.5
+},
+"derived": false,
+"note": "Apollo 11, Mare Tranquillitatis: 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_00n_15n_000_030, ldem_1024_15s_00s_000_030",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_00n_15n_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_00n_15n_000_030.img",
+"sha256": "546dc2a295c93ccb7bfd05e93e8676b18d51df5db921d0e2bbc6fee35bd0e51c"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_15s_00s_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15s_00s_000_030.img",
+"sha256": "752aab8ce0baa471dda067f5a41dc63529f38c64ac59bfe78902f3b3b8edad44"
+}
+]
+},
+{
+"name": "apollo11_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1691,
+"height": 1690,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1596061,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": 1016.5,
+"soff": -5164.5
+},
+"derived": true,
+"note": "Apollo 11, Mare Tranquillitatis: 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_00n_15n_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_00n_15n_000_030.img",
+"sha256": "546dc2a295c93ccb7bfd05e93e8676b18d51df5db921d0e2bbc6fee35bd0e51c"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_15s_00s_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15s_00s_000_030.img",
+"sha256": "752aab8ce0baa471dda067f5a41dc63529f38c64ac59bfe78902f3b3b8edad44"
+}
+]
+},
+{
+"name": "blueghost_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1784,
+"height": 1692,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 910754,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": 19852.5,
+"soff": -62403.5
+},
+"derived": false,
+"note": "Blue Ghost M1, Mare Crisium: 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_15n_30n_060_090",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15n_30n_060_090.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15n_30n_060_090.img",
+"sha256": "d06f27671aa8e38f71ab3d5904718e08f6097d28f03797f010b54413420edaba"
+}
+]
+},
+{
+"name": "blueghost_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1784,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1524976,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": 5596.5,
+"soff": -14932.5
+},
+"derived": true,
+"note": "Blue Ghost M1, Mare Crisium: 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15n_30n_030_060.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15n_30n_030_060.img",
+"sha256": "965e1a592107278eb1ed3f19a84485613d5145a41b04a4cf05f558eabbfaa1c7"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_15n_30n_060_090.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15n_30n_060_090.img",
+"sha256": "d06f27671aa8e38f71ab3d5904718e08f6097d28f03797f010b54413420edaba"
+}
+]
+},
+{
+"name": "apollo15_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1884,
+"height": 1692,
+"tile": 256,
+"ny": 7,
+"nx": 8,
+"wrap": false,
+"tiles_b64": "/////////w==",
+"ntiles": 56,
+"bytes": 1216893,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": 27603.5,
+"soff": -2779.5
+},
+"derived": false,
+"note": "Apollo 15, Hadley Rille: 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_15n_30n_000_030",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15n_30n_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15n_30n_000_030.img",
+"sha256": "8f553c2897a8956a0219820a27d3a04b1b7ae53ef17395f259dee99655b4abc2"
+}
+]
+},
+{
+"name": "apollo15_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1883,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 8,
+"wrap": false,
+"tiles_b64": "/////////w==",
+"ntiles": 56,
+"bytes": 1986507,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": 7534.5,
+"soff": 10.5
+},
+"derived": true,
+"note": "Apollo 15, Hadley Rille: 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15n_30n_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15n_30n_000_030.img",
+"sha256": "8f553c2897a8956a0219820a27d3a04b1b7ae53ef17395f259dee99655b4abc2"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_15n_30n_330_360.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15n_30n_330_360.img",
+"sha256": "6da32e0d4cb3a9e20b7881a22a3ea161a795bf64b5d233fdda9652084ba3b0e4"
+}
+]
+},
+{
+"name": "slim_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1738,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1202651,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": -12791.5,
+"soff": -24989.5
+},
+"derived": false,
+"note": "SLIM (Shioli): 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_15s_00s_000_030",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15s_00s_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15s_00s_000_030.img",
+"sha256": "752aab8ce0baa471dda067f5a41dc63529f38c64ac59bfe78902f3b3b8edad44"
+}
+]
+},
+{
+"name": "slim_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1738,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1950073,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": -2564.5,
+"soff": -5596.5
+},
+"derived": true,
+"note": "SLIM (Shioli): 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15s_00s_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15s_00s_000_030.img",
+"sha256": "752aab8ce0baa471dda067f5a41dc63529f38c64ac59bfe78902f3b3b8edad44"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_30s_15s_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_30s_15s_000_030.img",
+"sha256": "b4c3eb0eb374000073d7b01d22a9ca73344ad369abf5355155fe6ff97cb34fd4"
+}
+]
+},
+{
+"name": "change6_r30",
+"group": "terrain",
+"kind": "height",
+"width": 2262,
+"height": 1692,
+"tile": 256,
+"ny": 7,
+"nx": 9,
+"wrap": false,
+"tiles_b64": "/////////38=",
+"ntiles": 63,
+"bytes": 1217989,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": -41793.5,
+"soff": -209829.5
+},
+"derived": false,
+"note": "Chang'e 6, Apollo basin (Statio Tianjiang): 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_45s_30s_180_210",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_45s_30s_180_210.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_45s_30s_180_210.img",
+"sha256": "42b9c3c36a87cd20545eb44c61b48d5274857929b1ca851d78f1c0dd98311c7f"
+}
+]
+},
+{
+"name": "change6_r120",
+"group": "terrain",
+"kind": "height",
+"width": 2261,
+"height": 1690,
+"tile": 256,
+"ny": 7,
+"nx": 9,
+"wrap": false,
+"tiles_b64": "/////////38=",
+"ntiles": 63,
+"bytes": 2202760,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": -9815.5,
+"soff": -51610.5
+},
+"derived": true,
+"note": "Chang'e 6, Apollo basin (Statio Tianjiang): 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_45s_30s_180_210.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_45s_30s_180_210.img",
+"sha256": "42b9c3c36a87cd20545eb44c61b48d5274857929b1ca851d78f1c0dd98311c7f"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_45s_30s_210_240.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_45s_30s_210_240.img",
+"sha256": "da16df3eeec4345573456c5b1f9163c937b78fef14a92a75ae9d75b6b9a091e9"
+}
+]
+},
+{
+"name": "change4_r30",
+"group": "terrain",
+"kind": "height",
+"width": 2410,
+"height": 1692,
+"tile": 256,
+"ny": 7,
+"nx": 10,
+"wrap": false,
+"tiles_b64": "//////////8/",
+"ntiles": 70,
+"bytes": 1309536,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": -45702.5,
+"soff": -180647.5
+},
+"derived": false,
+"note": "Chang'e 4, Von Karman (Statio Tianhe): 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_45s_30s_150_180, ldem_1024_60s_45s_150_180",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_45s_30s_150_180.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_45s_30s_150_180.img",
+"sha256": "10ec76532f1a55e39848117783a0f8517a86eeb17d7ee01091aa72022183eff9"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_60s_45s_150_180.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_60s_45s_150_180.img",
+"sha256": "a8eded118c24a1fbb5e307447ea96f29db252b647b726f5db0c460485c766a02"
+}
+]
+},
+{
+"name": "change4_r120",
+"group": "terrain",
+"kind": "height",
+"width": 2409,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 10,
+"wrap": false,
+"tiles_b64": "//////////8/",
+"ntiles": 70,
+"bytes": 2403813,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": -10792.5,
+"soff": -44259.5
+},
+"derived": true,
+"note": "Chang'e 4, Von Karman (Statio Tianhe): 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_45s_30s_150_180.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_45s_30s_150_180.img",
+"sha256": "10ec76532f1a55e39848117783a0f8517a86eeb17d7ee01091aa72022183eff9"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_45s_30s_180_210.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_45s_30s_180_210.img",
+"sha256": "42b9c3c36a87cd20545eb44c61b48d5274857929b1ca851d78f1c0dd98311c7f"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_60s_45s_150_180.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_60s_45s_150_180.img",
+"sha256": "a8eded118c24a1fbb5e307447ea96f29db252b647b726f5db0c460485c766a02"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_60s_45s_180_210.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_60s_45s_180_210.img",
+"sha256": "39b12c9ea057e11b214af7b29f6a4af67d3091db13bfef69183004075d110e50"
+}
+]
+},
+{
+"name": "apollo16_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1712,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1113942,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": -8344.5,
+"soff": -15018.5
+},
+"derived": false,
+"note": "Apollo 16, Descartes: 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_15s_00s_000_030",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15s_00s_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15s_00s_000_030.img",
+"sha256": "752aab8ce0baa471dda067f5a41dc63529f38c64ac59bfe78902f3b3b8edad44"
+}
+]
+},
+{
+"name": "apollo16_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1712,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1882729,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": -1452.5,
+"soff": -3113.5
+},
+"derived": true,
+"note": "Apollo 16, Descartes: 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15s_00s_000_030.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15s_00s_000_030.img",
+"sha256": "752aab8ce0baa471dda067f5a41dc63529f38c64ac59bfe78902f3b3b8edad44"
+}
+]
+},
+{
+"name": "apollo12_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1694,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 904307,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": -2241.5,
+"soff": -343810.5
+},
+"derived": false,
+"note": "Apollo 12, Oceanus Procellarum: 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_15s_00s_330_360",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15s_00s_330_360.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15s_00s_330_360.img",
+"sha256": "2e05981be877e8e60230e51b41ee1d0ad2204c68ef53e45a65eec73592bae297"
+}
+]
+},
+{
+"name": "apollo12_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1693,
+"height": 1690,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1633507,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": 72.5,
+"soff": -85318.5
+},
+"derived": true,
+"note": "Apollo 12, Oceanus Procellarum: 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_00n_15n_330_360.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_00n_15n_330_360.img",
+"sha256": "b28029e93451745c7d6d66cc0531888de24bf796a79b2522f397a1a2a317a5b9"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_15s_00s_330_360.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15s_00s_330_360.img",
+"sha256": "2e05981be877e8e60230e51b41ee1d0ad2204c68ef53e45a65eec73592bae297"
+}
+]
+},
+{
+"name": "change3_r30",
+"group": "terrain",
+"kind": "height",
+"width": 2355,
+"height": 1692,
+"tile": 256,
+"ny": 7,
+"nx": 10,
+"wrap": false,
+"tiles_b64": "//////////8/",
+"ntiles": 70,
+"bytes": 1159728,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": 46024.5,
+"soff": -347483.5
+},
+"derived": false,
+"note": "Chang'e 3, Mare Imbrium: 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_30n_45n_330_360",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_30n_45n_330_360.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_30n_45n_330_360.img",
+"sha256": "e1db35d6509b461626df39bac794efd54b7e23bdf7cc2ab1a6d7d1746c6e9ee9"
+}
+]
+},
+{
+"name": "change3_r120",
+"group": "terrain",
+"kind": "height",
+"width": 2355,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 10,
+"wrap": false,
+"tiles_b64": "//////////8/",
+"ntiles": 70,
+"bytes": 1950335,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": 12139.5,
+"soff": -85988.5
+},
+"derived": true,
+"note": "Chang'e 3, Mare Imbrium: 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_30n_45n_330_360.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_30n_45n_330_360.img",
+"sha256": "e1db35d6509b461626df39bac794efd54b7e23bdf7cc2ab1a6d7d1746c6e9ee9"
+},
+{
+"file": "lola/tiles_30m/ldem_1024_45n_60n_330_360.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_45n_60n_330_360.img",
+"sha256": "9afaa75de940bfac103a36a1fb3f068f212e4598de910bf7a623799d10494f86"
+}
+]
+},
+{
+"name": "apollo14_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1695,
+"height": 1691,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1063804,
+"proj": {
+"type": "cyl",
+"res": 1024.0,
+"loff": -2889.5,
+"soff": -349902.5
+},
+"derived": false,
+"note": "Apollo 14, Fra Mauro: 0-25 km at 30 m (1024 px/deg), native crop of ldem_1024_15s_00s_330_360",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15s_00s_330_360.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15s_00s_330_360.img",
+"sha256": "2e05981be877e8e60230e51b41ee1d0ad2204c68ef53e45a65eec73592bae297"
+}
+]
+},
+{
+"name": "apollo14_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1694,
+"height": 1690,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1748415,
+"proj": {
+"type": "cyl",
+"res": 256.0,
+"loff": -89.5,
+"soff": -86841.5
+},
+"derived": true,
+"note": "Apollo 14, Fra Mauro: 25-100 km at ~118 m (256 px/deg), 4x4 block mean of the 30 m tiles",
+"source": [
+{
+"file": "lola/tiles_30m/ldem_1024_15s_00s_330_360.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_15s_00s_330_360.img",
+"sha256": "2e05981be877e8e60230e51b41ee1d0ad2204c68ef53e45a65eec73592bae297"
+}
+]
+},
+{
+"name": "degerlache_core",
+"group": "terrain",
+"kind": "height",
+"width": 2002,
+"height": 2002,
+"tile": 256,
+"ny": 8,
+"nx": 8,
+"wrap": false,
+"tiles_b64": "//////////8=",
+"ntiles": 64,
+"bytes": 1416177,
+"proj": {
+"type": "polar",
+"scale": 5.0,
+"loff": 1267.5,
+"soff": 10215.5
+},
+"derived": false,
+"note": "de Gerlache Rim 2: 0-5 km at 5 m; native crop of ldem_875s_5m.img",
+"source": {
+"file": "lola/polar_south/ldem_875s_5m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_875s_5m.img",
+"sha256": "f47a8bf8ca98de0060895d6caa1e81388f851a3ad695f986f4f8c3b541b594c3"
+}
+},
+{
+"name": "degerlache_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1667,
+"height": 1667,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1820963,
+"proj": {
+"type": "polar",
+"scale": 30.0,
+"loff": 877.8425228196904,
+"soff": 2369.1617195892227
+},
+"derived": true,
+"note": "de Gerlache Rim 2: 5-25 km at 30 m, bilinear resample of ldem_80s_20m",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "degerlache_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1668,
+"height": 1668,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 2355140,
+"proj": {
+"type": "polar",
+"scale": 120.0,
+"loff": 844.5,
+"soff": 1217.5
+},
+"derived": false,
+"note": "de Gerlache Rim 2: 25-100 km at 120 m, native crop of ldem_75s_120m",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "slater_core",
+"group": "terrain",
+"kind": "height",
+"width": 2002,
+"height": 2002,
+"tile": 256,
+"ny": 8,
+"nx": 8,
+"wrap": false,
+"tiles_b64": "//////////8=",
+"ntiles": 64,
+"bytes": 1320254,
+"proj": {
+"type": "polar",
+"scale": 5.0,
+"loff": -3227.5,
+"soff": -9850.5
+},
+"derived": false,
+"note": "Slater Plain: 0-5 km at 5 m; native crop of ldem_875s_5m.img",
+"source": {
+"file": "lola/polar_south/ldem_875s_5m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_875s_5m.img",
+"sha256": "f47a8bf8ca98de0060895d6caa1e81388f851a3ad695f986f4f8c3b541b594c3"
+}
+},
+{
+"name": "slater_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1667,
+"height": 1667,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1824950,
+"proj": {
+"type": "polar",
+"scale": 30.0,
+"loff": 128.6233363819818,
+"soff": -975.0868833570166
+},
+"derived": true,
+"note": "Slater Plain: 5-25 km at 30 m, bilinear resample of ldem_80s_20m",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "slater_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1668,
+"height": 1669,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 2358116,
+"proj": {
+"type": "polar",
+"scale": 120.0,
+"loff": 657.5,
+"soff": 381.5
+},
+"derived": false,
+"note": "Slater Plain: 25-100 km at 120 m, native crop of ldem_75s_120m",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "haworth_core",
+"group": "terrain",
+"kind": "height",
+"width": 1002,
+"height": 1002,
+"tile": 256,
+"ny": 4,
+"nx": 4,
+"wrap": false,
+"tiles_b64": "//8=",
+"ntiles": 16,
+"bytes": 576314,
+"proj": {
+"type": "polar",
+"scale": 10.0,
+"loff": 9880.5,
+"soff": 1156.5
+},
+"derived": false,
+"note": "Haworth: 0-5 km at 10 m; native crop of ldem_85s_10m.img",
+"source": {
+"file": "lola/polar_south/ldem_85s_10m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_10m.img",
+"sha256": "6f5f9832ec6e2080ea532ddc8504656746780a89a7228cba943aa81f5862c3d1"
+}
+},
+{
+"name": "haworth_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1667,
+"height": 1667,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1948773,
+"proj": {
+"type": "polar",
+"scale": 30.0,
+"loff": 3959.8761246110007,
+"soff": 1051.962503132346
+},
+"derived": true,
+"note": "Haworth: 5-25 km at 30 m, bilinear resample of ldem_80s_20m",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "haworth_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1669,
+"height": 1669,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 2386276,
+"proj": {
+"type": "polar",
+"scale": 120.0,
+"loff": 1615.5,
+"soff": 888.5
+},
+"derived": false,
+"note": "Haworth: 25-100 km at 120 m, native crop of ldem_75s_120m",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "malapert_core",
+"group": "terrain",
+"kind": "height",
+"width": 1002,
+"height": 1002,
+"tile": 256,
+"ny": 4,
+"nx": 4,
+"wrap": false,
+"tiles_b64": "//8=",
+"ntiles": 16,
+"bytes": 581817,
+"proj": {
+"type": "polar",
+"scale": 10.0,
+"loff": 12690.5,
+"soff": 855.5
+},
+"derived": false,
+"note": "Mons Malapert (Malapert Massif): 0-5 km at 10 m; native crop of ldem_85s_10m.img",
+"source": {
+"file": "lola/polar_south/ldem_85s_10m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_10m.img",
+"sha256": "6f5f9832ec6e2080ea532ddc8504656746780a89a7228cba943aa81f5862c3d1"
+}
+},
+{
+"name": "malapert_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1667,
+"height": 1667,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1932435,
+"proj": {
+"type": "polar",
+"scale": 30.0,
+"loff": 4896.603421907369,
+"soff": 951.7990098513158
+},
+"derived": true,
+"note": "Mons Malapert (Malapert Massif): 5-25 km at 30 m, bilinear resample of ldem_80s_20m",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "malapert_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1669,
+"height": 1669,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 2385342,
+"proj": {
+"type": "polar",
+"scale": 120.0,
+"loff": 1849.5,
+"soff": 863.5
+},
+"derived": false,
+"note": "Mons Malapert (Malapert Massif): 25-100 km at 120 m, native crop of ldem_75s_120m",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "mouton_core",
+"group": "terrain",
+"kind": "height",
+"width": 502,
+"height": 502,
+"tile": 256,
+"ny": 2,
+"nx": 2,
+"wrap": false,
+"tiles_b64": "Dw==",
+"ntiles": 4,
+"bytes": 142679,
+"proj": {
+"type": "polar",
+"scale": 20.0,
+"loff": 7273.5,
+"soff": -3969.5
+},
+"derived": false,
+"note": "Mons Mouton (plateau): 0-5 km at 20 m; native crop of ldem_80s_20m.img",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "mouton_r30",
+"group": "terrain",
+"kind": "height",
+"width": 1667,
+"height": 1667,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 1809731,
+"proj": {
+"type": "polar",
+"scale": 30.0,
+"loff": 5515.392799766377,
+"soff": -1979.9318159914744
+},
+"derived": true,
+"note": "Mons Mouton (plateau): 5-25 km at 30 m, bilinear resample of ldem_80s_20m",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "mouton_r120",
+"group": "terrain",
+"kind": "height",
+"width": 1669,
+"height": 1669,
+"tile": 256,
+"ny": 7,
+"nx": 7,
+"wrap": false,
+"tiles_b64": "////////AQ==",
+"ntiles": 49,
+"bytes": 2402957,
+"proj": {
+"type": "polar",
+"scale": 120.0,
+"loff": 2004.5,
+"soff": 130.5
+},
+"derived": false,
+"note": "Mons Mouton (plateau): 25-100 km at 120 m, native crop of ldem_75s_120m",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "p120",
+"group": "terrain",
+"kind": "height",
+"width": 7624,
+"height": 7624,
+"tile": 256,
+"ny": 30,
+"nx": 30,
+"wrap": false,
+"tiles_b64": "AP4fAOD/HwD+/x/A//8P+P//B////8H////4//9//v//3///////////////////////////////////////////////////////////n////+f////x//8//P//B/7//wD//x8A//8DgP9/AID/AwA=",
+"ntiles": 756,
+"bytes": 40904749,
+"proj": {
+"type": "polar",
+"scale": 120.0,
+"loff": 3811.5,
+"soff": 3811.5
+},
+"derived": false,
+"note": "LOLA 75S-90S 120 m (whole cap; band 75-80S)",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "p240",
+"group": "terrain",
+"kind": "height",
+"width": 3812,
+"height": 3812,
+"tile": 256,
+"ny": 15,
+"nx": 15,
+"wrap": false,
+"tiles_b64": "+A/+j//v/////////////////////+//4//gPwA=",
+"ntiles": 201,
+"bytes": 12239202,
+"proj": {
+"type": "polar",
+"scale": 240.0,
+"loff": 1905.5,
+"soff": 1905.5
+},
+"derived": true,
+"note": "2x2 block mean overview of p120",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "p480",
+"group": "terrain",
+"kind": "height",
+"width": 1906,
+"height": 1906,
+"tile": 256,
+"ny": 8,
+"nx": 8,
+"wrap": false,
+"tiles_b64": "fv//////fz4=",
+"ntiles": 58,
+"bytes": 3689014,
+"proj": {
+"type": "polar",
+"scale": 480.0,
+"loff": 952.5,
+"soff": 952.5
+},
+"derived": true,
+"note": "2x2 block mean overview of p120",
+"source": {
+"file": "lola/polar_south/ldem_75s_120m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_75s_120m.img",
+"sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+}
+},
+{
+"name": "p40",
+"group": "terrain",
+"kind": "height",
+"width": 15200,
+"height": 15200,
+"tile": 256,
+"ny": 60,
+"nx": 60,
+"wrap": false,
+"tiles_b64": "AADw/38AAAAAwP//PwAAAAD///8PAAAA/P///wMAAPD///9/AACA/////x8AAPz/////AwDw/////38AgP//////DwD4//////8BwP//////PwD+//////8D8P//////fwD///////8P+P///////4D///////8f/P///////8H///////8//v///////+P///////9///////////f///////9///////////f///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////f///////9//////////+f///////9//v///////+P///////8//P///////8P///////8f+P///////4H///////8P8P//////fwD+//////8H4P//////PwD8//////8BgP//////DwDw/////38AAP7/////AwDA/////x8AAPD/////AAAA/v///wMAAID///8fAAAA4P//fwAAAAD4//8AAAAAAPj/AAAA",
+"ntiles": 2931,
+"bytes": 126068254,
+"proj": {
+"type": "polar",
+"scale": 40.0,
+"loff": 7599.5,
+"soff": 7599.5
+},
+"derived": false,
+"note": "LOLA 80S-90S 40 m (band 80-85S)",
+"source": {
+"file": "lola/polar_south/ldem_80s_40m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_40m.img",
+"sha256": "84665a59d6a5006c9ae1d92560470bcabe89a713a98f4c700692f088ae4ee2b1"
+}
+},
+{
+"name": "p20",
+"group": "terrain",
+"kind": "height",
+"width": 30400,
+"height": 30400,
+"tile": 256,
+"ny": 119,
+"nx": 119,
+"wrap": false,
+"tiles_b64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACA/z8AAAAAAAAAAAAAAAD8//8AAAAAAAAAAAAAAID///8DAAAAAAAAAAAAAPD///8HAAAAAAAAAAAAAP7///8HAAAAAAAAAAAAgP////8PAAAAAAAAAAAA4P////8PAAAAAAAAAAAA+P////8PAAAAAAAAAAAA/v////8PAAAAAAAAAACA//////8PAAAAAAAAAADg//////8PAAAAAAAAAAD4//////8PAAAAAAAAAAD+//////8PAAAAAAAAAID///////8HAAAAAAAAAMD///////8HAAAAAAAAAPD///////8DAAAAAAAAAPj///////8DAAAAAAAAAP7//wH8//8BAAAAAAAAAP//PwD4//8BAAAAAAAAwP//BwD4//8AAAAAAAAA4P//AQDw//8AAAAAAAAA8P9/AADw/38AAAAAAAAA+P8fAAD4/z8AAAAAAAAA/v8PAAD4/x8AAAAAAAAA//8DAAD4/x8AAAAAAACA//8BAAD8/w8AAAAAAADA/38AAAD+/wcAAAAAAADg/z8AAAD+/wMAAAAAAADw/x8AAAD//wEAAAAAAAD4/w8AAID//wAAAAAAAAD8/wcAAMD/fwAAAAAAAAD+/wMAAOD/PwAAAAAAAAD//wEAAPD/HwAAAAAAAID//wAAAPj/DwAAAAAAAMD/fwAAAP7/BwAAAAAAAOD/fwAAAP//AwAAAAAAAPD/PwAAwP//AQAAAAAAAPj/PwAA4P9/AAAAAAAAAPj/PwAA+P8/AAAAAAAAAPz/HwAA/v8fAAAAAAAAAP7/HwCA//8PAAAAAAAAAP7/PwDg//8DAAAAAAAAAP//PwD8//8BAAAAAAAAgP///4D//38AAAAAAAAAgP///////z8AAAAAAAAAwP///////w8AAAAAAAAAwP///////wcAAAAAAAAAwP///////wEAAAAAAAAA4P//////fwAAAAAAAAAA4P//////PwAAAAAAAAAA4P//////DwAAAAAAAAAA4P//////AwAAAAAAAAAA4P//////AAAAAAAAAAAA4P////8/AAAAAAAAAAAA4P////8PAAAAAAAAAAAA4P////8BAAAAAAAAAAAAwP///38AAAAAAAAAAAAAgP///w8AAAAAAAAAAAAAAP///wEAAAAAAAAAAAAAAP7/PwAAAAAAAAAAAAAAAPD/AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+"ntiles": 2408,
+"bytes": 91790450,
+"proj": {
+"type": "polar",
+"scale": 20.0,
+"loff": 15199.5,
+"soff": 15199.5
+},
+"derived": false,
+"note": "LOLA 80S-90S 20 m, stored only for the 85-87.5S band",
+"source": {
+"file": "lola/polar_south/ldem_80s_20m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.img",
+"sha256": "db44c3b2444acff1af528301c8a6988934b490249aceff0ac55668bdf3eab365"
+}
+},
+{
+"name": "p10",
+"group": "terrain",
+"kind": "height",
+"width": 30336,
+"height": 30336,
+"tile": 256,
+"ny": 119,
+"nx": 119,
+"wrap": false,
+"tiles_b64": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/h8AAAAAAAAAAAAAAADw//8AAAAAAAAAAAAAAAD///8DAAAAAAAAAAAAAOD///8HAAAAAAAAAAAAAPj///8PAAAAAAAAAAAAAP////8PAAAAAAAAAAAAwP////8fAAAAAAAAAAAA8P////8fAAAAAAAAAAAA/v////8fAAAAAAAAAACA//////8fAAAAAAAAAADA//////8fAAAAAAAAAADw//////8fAAAAAAAAAAD8//////8fAAAAAAAAAAD///////8PAAAAAAAAAID///////8PAAAAAAAAAOD///////8HAAAAAAAAAPj///////8HAAAAAAAAAPz///////8HAAAAAAAAAP////////8DAAAAAAAAgP////////8BAAAAAAAAwP////////8BAAAAAAAA8P////////8AAAAAAAAA+P///////38AAAAAAAAA/P///////38AAAAAAAAA/v///////z8AAAAAAACA/////////x8AAAAAAADA/////////w8AAAAAAADg/////////wcAAAAAAADw/////////wMAAAAAAAD4/////////wMAAAAAAAD8/////////wEAAAAAAAD+/////////wAAAAAAAAD/////////fwAAAAAAAID/////////HwAAAAAAAMD/////////DwAAAAAAAOD/////////BwAAAAAAAPD/////////AwAAAAAAAPD/////////AQAAAAAAAPj/////////AAAAAAAAAPz///////9/AAAAAAAAAP7///////8fAAAAAAAAAP7///////8PAAAAAAAAAP////////8HAAAAAAAAgP////////8BAAAAAAAAgP////////8AAAAAAAAAwP///////z8AAAAAAAAAwP///////x8AAAAAAAAA4P///////wcAAAAAAAAA4P///////wMAAAAAAAAA4P///////wAAAAAAAAAA8P//////PwAAAAAAAAAA8P//////DwAAAAAAAAAA8P//////AwAAAAAAAAAA8P//////AQAAAAAAAAAA8P////8/AAAAAAAAAAAA8P////8PAAAAAAAAAAAA8P////8DAAAAAAAAAAAA4P////8AAAAAAAAAAAAAwP///x8AAAAAAAAAAAAAwP///wMAAAAAAAAAAAAAAP//fwAAAAAAAAAAAAAAAPz/BwAAAAAAAAAAAAAAAIAHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+"ntiles": 3103,
+"bytes": 102071433,
+"proj": {
+"type": "polar",
+"scale": 10.0,
+"loff": 15167.5,
+"soff": 15167.5
+},
+"derived": false,
+"note": "LOLA 85S-90S 10 m, stored only for 87.5-90S",
+"source": {
+"file": "lola/polar_south/ldem_85s_10m.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_85s_10m.img",
+"sha256": "6f5f9832ec6e2080ea532ddc8504656746780a89a7228cba943aa81f5862c3d1"
+}
+},
+{
+"name": "sun60",
+"group": "illum",
+"kind": "visibility",
+"width": 5058,
+"height": 5058,
+"tile": 256,
+"ny": 20,
+"nx": 20,
+"wrap": false,
+"tiles_b64": "4H+A/x/8/+P/f/7/9////////////////////////////////+//f/7/w/8f+P8A/gc=",
+"ntiles": 349,
+"bytes": 27887797,
+"proj": {
+"type": "polar",
+"scale": 60.0,
+"loff": 2528.5,
+"soff": 2528.5
+},
+"derived": false,
+"note": "NASA LOLA average visibility (DN*0.00004 = fraction of time steps with any part of the disc above the horizon); unsupported EXTRAS product",
+"source": {
+"file": "lola_illumination/avgvisib_85s_060m_201608.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/extras/illumination/img/avgvisib_85s_060m_201608.img",
+"sha256": "82dadf321dee28f1947c1fed81858d4cf50fe8eb2aa405aae114e8ab21c1efe1"
+}
+},
+{
+"name": "earth60",
+"group": "illum",
+"kind": "visibility",
+"width": 5058,
+"height": 5058,
+"tile": 256,
+"ny": 20,
+"nx": 20,
+"wrap": false,
+"tiles_b64": "4H+A/x/8/+P/f/7/9////////////////////////////////+//f/7/w/8f+P8A/gc=",
+"ntiles": 349,
+"bytes": 21035583,
+"proj": {
+"type": "polar",
+"scale": 60.0,
+"loff": 2528.5,
+"soff": 2528.5
+},
+"derived": false,
+"note": "NASA LOLA average visibility (DN*0.00004 = fraction of time steps with any part of the disc above the horizon); unsupported EXTRAS product",
+"source": {
+"file": "lola_illumination/avgvisib_85s_060m_201608_earth.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/extras/illumination/img/avgvisib_85s_060m_201608_earth.img",
+"sha256": "0958313069d6039b2474c875ff662f28dbcba2bd853d9ea458aa807b7948c11f"
+}
+},
+{
+"name": "g64",
+"group": "terrain",
+"kind": "height",
+"width": 23040,
+"height": 11520,
+"tile": 256,
+"ny": 45,
+"nx": 90,
+"wrap": true,
+"tiles_b64": "//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8D",
+"ntiles": 4050,
+"bytes": 263838827,
+"proj": {
+"type": "cyl",
+"res": 64.0,
+"loff": 5759.5,
+"soff": -0.5
+},
+"derived": false,
+"note": "LOLA LDEM 64 px/deg (474 m), whole Moon",
+"source": {
+"file": "lola/global/ldem_64.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_64.img",
+"sha256": "1c4958699d4cffd7e777d51421b6044bba300aa0bef286a544309efb082cdbd6"
+}
+},
+{
+"name": "g32",
+"group": "terrain",
+"kind": "height",
+"width": 11520,
+"height": 5760,
+"tile": 256,
+"ny": 23,
+"nx": 45,
+"wrap": true,
+"tiles_b64": "////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Bw==",
+"ntiles": 1035,
+"bytes": 72232963,
+"proj": {
+"type": "cyl",
+"res": 32.0,
+"loff": 2879.5,
+"soff": -0.5
+},
+"derived": true,
+"note": "2x2 block mean overview of g64 (for zoomed-out views)",
+"source": {
+"file": "lola/global/ldem_64.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_64.img",
+"sha256": "1c4958699d4cffd7e777d51421b6044bba300aa0bef286a544309efb082cdbd6"
+}
+},
+{
+"name": "g16",
+"group": "terrain",
+"kind": "height",
+"width": 5760,
+"height": 2880,
+"tile": 256,
+"ny": 12,
+"nx": 23,
+"wrap": true,
+"tiles_b64": "/////////////////////////////////////////////w8=",
+"ntiles": 276,
+"bytes": 20294180,
+"proj": {
+"type": "cyl",
+"res": 16.0,
+"loff": 1439.5,
+"soff": -0.5
+},
+"derived": true,
+"note": "2x2 block mean overview of g64 (for zoomed-out views)",
+"source": {
+"file": "lola/global/ldem_64.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_64.img",
+"sha256": "1c4958699d4cffd7e777d51421b6044bba300aa0bef286a544309efb082cdbd6"
+}
+},
+{
+"name": "g8",
+"group": "terrain",
+"kind": "height",
+"width": 2880,
+"height": 1440,
+"tile": 256,
+"ny": 6,
+"nx": 12,
+"wrap": true,
+"tiles_b64": "////////////",
+"ntiles": 72,
+"bytes": 5822831,
+"proj": {
+"type": "cyl",
+"res": 8.0,
+"loff": 719.5,
+"soff": -0.5
+},
+"derived": true,
+"note": "2x2 block mean overview of g64 (for zoomed-out views)",
+"source": {
+"file": "lola/global/ldem_64.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_64.img",
+"sha256": "1c4958699d4cffd7e777d51421b6044bba300aa0bef286a544309efb082cdbd6"
+}
+},
+{
+"name": "g4",
+"group": "terrain",
+"kind": "height",
+"width": 1440,
+"height": 720,
+"tile": 256,
+"ny": 3,
+"nx": 6,
+"wrap": true,
+"tiles_b64": "//8D",
+"ntiles": 18,
+"bytes": 1581738,
+"proj": {
+"type": "cyl",
+"res": 4.0,
+"loff": 359.5,
+"soff": -0.5
+},
+"derived": true,
+"note": "2x2 block mean overview of g64 (for zoomed-out views)",
+"source": {
+"file": "lola/global/ldem_64.img",
+"url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_64.img",
+"sha256": "1c4958699d4cffd7e777d51421b6044bba300aa0bef286a544309efb082cdbd6"
+}
+}
+]
+}

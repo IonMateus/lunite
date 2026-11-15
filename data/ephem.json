@@ -1,0 +1,84 @@
+{
+ "moon_2020_2050": {
+  "file": "ephem/moon_2020_2050.bin",
+  "start_utc": "2020-01-01T00:00:00Z",
+  "step_s": 10800,
+  "count": 90585,
+  "columns": [
+   "subEarth_lon_deg",
+   "subEarth_lat_deg",
+   "subSun_lon_deg",
+   "subSun_lat_deg",
+   "earth_moon_dist_au"
+  ],
+  "dtype": "float32 little-endian, row-major",
+  "sources": [
+   {
+    "file": "horizons/moon_from_earth_2020_2034_3h.json",
+    "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&OBJ_DATA=%27YES%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&COMMAND=%27301%27&CENTER=%27500%40399%27&START_TIME=%272020-01-01%27&STOP_TIME=%272034-12-31%27&STEP_SIZE=%273+h%27&QUANTITIES=%2714%2C15%2C20%27",
+    "sha256": "25d0558c654df61d00b868b809d638e60e15d588e6d40a388c8ff2b79481a7e7"
+   },
+   {
+    "file": "horizons/moon_from_earth_gap_2034-12-31_3h.json",
+    "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&OBJ_DATA=%27YES%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&COMMAND=%27301%27&CENTER=%27500%40399%27&START_TIME=%272034-12-31%27&STOP_TIME=%272035-01-01%27&STEP_SIZE=%273+h%27&QUANTITIES=%2714%2C15%2C20%27",
+    "sha256": "f108ba5f45eb4fa428ec7b59fe1c33e26c6bb93edefa3b5e3f59ef7c495bc597"
+   },
+   {
+    "file": "horizons/moon_from_earth_2035_2049_3h.json",
+    "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&OBJ_DATA=%27YES%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&COMMAND=%27301%27&CENTER=%27500%40399%27&START_TIME=%272035-01-01%27&STOP_TIME=%272049-12-31%27&STEP_SIZE=%273+h%27&QUANTITIES=%2714%2C15%2C20%27",
+    "sha256": "3687c73b4c94f0940ec10d3af54cccb7de9bc34cf12290d226c247a3ed799755"
+   },
+   {
+    "file": "horizons/moon_from_earth_2049-12-31_2050_3h.json",
+    "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&OBJ_DATA=%27YES%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&COMMAND=%27301%27&CENTER=%27500%40399%27&START_TIME=%272049-12-31%27&STOP_TIME=%272051-01-01%27&STEP_SIZE=%273+h%27&QUANTITIES=%2714%2C15%2C20%27",
+    "sha256": "a586aace0fc797efc840e82df72cf28944d20fa2dc7454f1ceba282d13e22eea"
+   }
+  ]
+ },
+ "moon_apollo_1969_1972": {
+  "file": "ephem/moon_apollo_1969_1972.bin",
+  "start_utc": "1969-07-01T00:00:00Z",
+  "step_s": 10800,
+  "count": 10233,
+  "columns": [
+   "subEarth_lon_deg",
+   "subEarth_lat_deg",
+   "subSun_lon_deg",
+   "subSun_lat_deg",
+   "earth_moon_dist_au"
+  ],
+  "dtype": "float32 little-endian, row-major",
+  "sources": [
+   {
+    "file": "horizons/moon_from_earth_apollo_1969-07_1972-12_3h.json",
+    "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&OBJ_DATA=%27YES%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&COMMAND=%27301%27&CENTER=%27500%40399%27&START_TIME=%271969-07-01%27&STOP_TIME=%271972-12-31%27&STEP_SIZE=%273+h%27&QUANTITIES=%2714%2C15%2C20%27",
+    "sha256": "c03240d257561920b25e976cba39ad768c7db7addb3b6f9667604ab16cc86245"
+   }
+  ]
+ },
+ "earth_2020_2050": {
+  "file": "ephem/earth_2020_2050.bin",
+  "start_utc": "2020-01-01T00:00:00Z",
+  "step_s": 10800,
+  "count": 90585,
+  "columns": [
+   "subMoon_lon_deg_on_Earth",
+   "subMoon_lat_deg_on_Earth"
+  ],
+  "dtype": "float32 little-endian, row-major",
+  "sources": [
+   {
+    "file": "horizons/earth_from_moon_2020_2034_3h.json",
+    "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&OBJ_DATA=%27YES%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&COMMAND=%27399%27&CENTER=%27500%40301%27&START_TIME=%272020-01-01%27&STOP_TIME=%272034-12-31%27&STEP_SIZE=%273+h%27&QUANTITIES=%2714%2C20%27",
+    "sha256": "606577785f524700d51981e792b7fe3a21d78b5b46b9498ac7150dae8a134902"
+   },
+   {
+    "file": "horizons/earth_from_moon_2034-12-31_2050_3h.json",
+    "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&OBJ_DATA=%27YES%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27OBSERVER%27&CSV_FORMAT=%27YES%27&ANG_FORMAT=%27DEG%27&COMMAND=%27399%27&CENTER=%27500%40301%27&START_TIME=%272034-12-31%27&STOP_TIME=%272051-01-01%27&STEP_SIZE=%273+h%27&QUANTITIES=%2714%2C20%27",
+    "sha256": "06dbe03283ba6aff4d2e6bf85b9047b2cc5f7ecea309aadf22ad086e67771a03"
+   }
+  ]
+ },
+ "frame": "Horizons body-fixed frame MOON_ME (DE441); LOLA grids use Mean Earth/Polar Axis of DE421",
+ "au_km": 149597870.7
+}

@@ -1,0 +1,444 @@
+[
+ {
+  "rank": 1,
+  "id": "shackleton",
+  "name": "Shackleton rim (Peak Near Shackleton)",
+  "lat": -89.67,
+  "lon": 129.78,
+  "core_m": 5,
+  "status": "future",
+  "why": "The emblematic polar site: the rim sees the Sun most of the year while the crater floor never does. The ideal test of light versus ice.",
+  "coord_source": "IAU Gazetteer of Planetary Nomenclature (crater centre)",
+  "agency": "NASA (Artemis)",
+  "country": "USA",
+  "links": [
+   "https://planetarynames.wr.usgs.gov/",
+   "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"
+  ],
+  "notes": "Artemis III candidate region in the 2022 list (not in the 2024 list of nine). Exact landing point not published; feature centre used.",
+  "layers": {
+   "core": "shackleton_core",
+   "r30": "shackleton_r30",
+   "r120": "shackleton_r120"
+  }
+ },
+ {
+  "rank": 2,
+  "id": "im2",
+  "name": "IM-2 Athena",
+  "lat": -84.7906,
+  "lon": 29.1957,
+  "core_m": 20,
+  "status": "past",
+  "why": "Highest-latitude landing ever. The closest real test of what this tool simulates.",
+  "coord_source": "LROC (NASA/ASU)",
+  "agency": "Intuitive Machines (NASA CLPS)",
+  "country": "USA",
+  "links": [
+   "https://www.lroc.asu.edu/images/1408"
+  ],
+  "notes": "Landed March 2025 and came to rest on its side in a crater.",
+  "layers": {
+   "core": "im2_core",
+   "r30": "im2_r30",
+   "r120": "im2_r120"
+  }
+ },
+ {
+  "rank": 3,
+  "id": "shivshakti",
+  "name": "Statio Shiv Shakti (Chandrayaan-3)",
+  "lat": -69.37,
+  "lon": 32.32,
+  "core_m": 30,
+  "status": "past",
+  "why": "First landing near the south pole (August 2023). Shows that sites near 70 S are reachable.",
+  "coord_source": "IAU Gazetteer (Statio Shiv Shakti)",
+  "agency": "ISRO",
+  "country": "India",
+  "links": [
+   "https://planetarynames.wr.usgs.gov/"
+  ],
+  "notes": "",
+  "layers": {
+   "core": "shivshakti_r30",
+   "r30": "shivshakti_r30",
+   "r120": "shivshakti_r120"
+  }
+ },
+ {
+  "rank": 4,
+  "id": "im1",
+  "name": "IM-1 Odysseus",
+  "lat": -80.13,
+  "lon": 1.44,
+  "core_m": 20,
+  "status": "past",
+  "why": "First commercial landing and first US landing since 1972, already at 80 S, with real failure data.",
+  "coord_source": "LROC",
+  "agency": "Intuitive Machines (NASA CLPS)",
+  "country": "USA",
+  "links": [
+   "https://www.lroc.asu.edu/posts/1360"
+  ],
+  "notes": "Landed February 2024. About 0.13 deg from the 80 S edge of the 20 m map, so part of its window is filled from coarser data.",
+  "layers": {
+   "core": "im1_core",
+   "r30": "im1_r30",
+   "r120": "im1_r120"
+  }
+ },
+ {
+  "rank": 5,
+  "id": "apollo17",
+  "name": "Apollo 17, Taurus-Littrow",
+  "lat": 20.191,
+  "lon": 30.772,
+  "core_m": 30,
+  "status": "past",
+  "why": "Last and longest crewed landing. A valley between massifs, good for testing real horizons.",
+  "coord_source": "NASA NSSDCA (Mean Earth/Polar Axis, DE421)",
+  "agency": "NASA",
+  "country": "USA",
+  "links": [
+   "https://nssdc.gsfc.nasa.gov/planetary/lunar/apolloland.html"
+  ],
+  "notes": "December 1972.",
+  "layers": {
+   "core": "apollo17_r30",
+   "r30": "apollo17_r30",
+   "r120": "apollo17_r120"
+  }
+ },
+ {
+  "rank": 6,
+  "id": "apollo11",
+  "name": "Apollo 11, Mare Tranquillitatis",
+  "lat": 0.674,
+  "lon": 23.473,
+  "core_m": 30,
+  "status": "past",
+  "why": "The first human landing, recognised by every judge. The validation anchor.",
+  "coord_source": "NASA NSSDCA; IAU (Statio Tranquillitatis 0.67 / 23.47)",
+  "agency": "NASA",
+  "country": "USA",
+  "links": [
+   "https://nssdc.gsfc.nasa.gov/planetary/lunar/apolloland.html"
+  ],
+  "notes": "July 1969.",
+  "layers": {
+   "core": "apollo11_r30",
+   "r30": "apollo11_r30",
+   "r120": "apollo11_r120"
+  }
+ },
+ {
+  "rank": 7,
+  "id": "blueghost",
+  "name": "Blue Ghost M1, Mare Crisium",
+  "lat": 18.5623,
+  "lon": 61.8103,
+  "core_m": 30,
+  "status": "past",
+  "why": "First fully successful commercial mission, through a complete lunar day.",
+  "coord_source": "LROC",
+  "agency": "Firefly Aerospace (NASA CLPS)",
+  "country": "USA",
+  "links": [
+   "https://www.lroc.asu.edu/images/1407"
+  ],
+  "notes": "March 2025.",
+  "layers": {
+   "core": "blueghost_r30",
+   "r30": "blueghost_r30",
+   "r120": "blueghost_r120"
+  }
+ },
+ {
+  "rank": 8,
+  "id": "apollo15",
+  "name": "Apollo 15, Hadley Rille",
+  "lat": 26.132,
+  "lon": 3.633,
+  "core_m": 30,
+  "status": "past",
+  "why": "Dramatic relief (Apennine mountains and a rille). First use of the Lunar Roving Vehicle.",
+  "coord_source": "NASA NSSDCA",
+  "agency": "NASA",
+  "country": "USA",
+  "links": [
+   "https://nssdc.gsfc.nasa.gov/planetary/lunar/apolloland.html"
+  ],
+  "notes": "July 1971.",
+  "layers": {
+   "core": "apollo15_r30",
+   "r30": "apollo15_r30",
+   "r120": "apollo15_r120"
+  }
+ },
+ {
+  "rank": 9,
+  "id": "slim",
+  "name": "SLIM (Shioli)",
+  "lat": -13.316,
+  "lon": 25.251,
+  "core_m": 30,
+  "status": "past",
+  "why": "Precision landing about 55 m from target: proof that choosing the point matters.",
+  "coord_source": "LROC (JAXA target -13.31549 / 25.24889)",
+  "agency": "JAXA",
+  "country": "Japan",
+  "links": [
+   "https://www.lroc.asu.edu/images/1358",
+   "https://www.nasa.gov/missions/lro/nasas-lro-spots-japans-moon-lander"
+  ],
+  "notes": "January 2024.",
+  "layers": {
+   "core": "slim_r30",
+   "r30": "slim_r30",
+   "r120": "slim_r120"
+  }
+ },
+ {
+  "rank": 10,
+  "id": "change6",
+  "name": "Chang'e 6, Apollo basin (Statio Tianjiang)",
+  "lat": -41.6385,
+  "lon": -153.9852,
+  "core_m": 30,
+  "status": "past",
+  "why": "First sample return from the far side.",
+  "coord_source": "LROC; IAU (Statio Tianjiang)",
+  "agency": "CNSA",
+  "country": "China",
+  "links": [
+   "https://www.lroc.asu.edu/images/1374"
+  ],
+  "notes": "June 2024.",
+  "layers": {
+   "core": "change6_r30",
+   "r30": "change6_r30",
+   "r120": "change6_r120"
+  }
+ },
+ {
+  "rank": 11,
+  "id": "change4",
+  "name": "Chang'e 4, Von Karman (Statio Tianhe)",
+  "lat": -45.4561,
+  "lon": 177.5885,
+  "core_m": 30,
+  "status": "past",
+  "why": "First far-side landing. No line of sight to Earth, so a good case for the Earth requirement.",
+  "coord_source": "LROC (IAU -45.45 / 177.60)",
+  "agency": "CNSA",
+  "country": "China",
+  "links": [
+   "https://www.lroc.asu.edu/images/1100"
+  ],
+  "notes": "January 2019.",
+  "layers": {
+   "core": "change4_r30",
+   "r30": "change4_r30",
+   "r120": "change4_r120"
+  }
+ },
+ {
+  "rank": 12,
+  "id": "apollo16",
+  "name": "Apollo 16, Descartes",
+  "lat": -8.973,
+  "lon": 15.501,
+  "core_m": 30,
+  "status": "past",
+  "why": "The only highland landing.",
+  "coord_source": "NASA NSSDCA",
+  "agency": "NASA",
+  "country": "USA",
+  "links": [
+   "https://nssdc.gsfc.nasa.gov/planetary/lunar/apolloland.html"
+  ],
+  "notes": "April 1972.",
+  "layers": {
+   "core": "apollo16_r30",
+   "r30": "apollo16_r30",
+   "r120": "apollo16_r120"
+  }
+ },
+ {
+  "rank": 13,
+  "id": "apollo12",
+  "name": "Apollo 12, Oceanus Procellarum",
+  "lat": -3.013,
+  "lon": -23.422,
+  "core_m": 30,
+  "status": "past",
+  "why": "Precision landing on a mare, next to an older probe (Surveyor 3).",
+  "coord_source": "NASA NSSDCA",
+  "agency": "NASA",
+  "country": "USA",
+  "links": [
+   "https://nssdc.gsfc.nasa.gov/planetary/lunar/apolloland.html"
+  ],
+  "notes": "November 1969.",
+  "layers": {
+   "core": "apollo12_r30",
+   "r30": "apollo12_r30",
+   "r120": "apollo12_r120"
+  }
+ },
+ {
+  "rank": 14,
+  "id": "change3",
+  "name": "Chang'e 3, Mare Imbrium",
+  "lat": 44.121,
+  "lon": -19.512,
+  "core_m": 30,
+  "status": "past",
+  "why": "First soft landing in 37 years, at mid-northern latitude.",
+  "coord_source": "LROC",
+  "agency": "CNSA",
+  "country": "China",
+  "links": [
+   "https://www.lroc.asu.edu/images/1092"
+  ],
+  "notes": "December 2013.",
+  "layers": {
+   "core": "change3_r30",
+   "r30": "change3_r30",
+   "r120": "change3_r120"
+  }
+ },
+ {
+  "rank": 15,
+  "id": "apollo14",
+  "name": "Apollo 14, Fra Mauro",
+  "lat": -3.646,
+  "lon": -17.472,
+  "core_m": 30,
+  "status": "past",
+  "why": "Imbrium basin ejecta terrain, rolling relief.",
+  "coord_source": "NASA NSSDCA",
+  "agency": "NASA",
+  "country": "USA",
+  "links": [
+   "https://nssdc.gsfc.nasa.gov/planetary/lunar/apolloland.html"
+  ],
+  "notes": "February 1971.",
+  "layers": {
+   "core": "apollo14_r30",
+   "r30": "apollo14_r30",
+   "r120": "apollo14_r120"
+  }
+ },
+ {
+  "rank": 16,
+  "id": "degerlache",
+  "name": "de Gerlache Rim 2",
+  "lat": -88.48,
+  "lon": -88.34,
+  "core_m": 5,
+  "status": "future",
+  "why": "Artemis III candidate region almost at the pole, with narrow rims and long shadows.",
+  "coord_source": "IAU Gazetteer (feature centre)",
+  "agency": "NASA (Artemis)",
+  "country": "USA",
+  "links": [
+   "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"
+  ],
+  "notes": "Exact landing point not published.",
+  "layers": {
+   "core": "degerlache_core",
+   "r30": "degerlache_r30",
+   "r120": "degerlache_r120"
+  }
+ },
+ {
+  "rank": 17,
+  "id": "slater",
+  "name": "Slater Plain",
+  "lat": -88.08,
+  "lon": 111.29,
+  "core_m": 5,
+  "status": "future",
+  "why": "Flat candidate terrain, a contrast to the rim sites.",
+  "coord_source": "IAU Gazetteer (feature centre)",
+  "agency": "NASA (Artemis)",
+  "country": "USA",
+  "links": [
+   "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"
+  ],
+  "notes": "",
+  "layers": {
+   "core": "slater_core",
+   "r30": "slater_r30",
+   "r120": "slater_r120"
+  }
+ },
+ {
+  "rank": 18,
+  "id": "haworth",
+  "name": "Haworth",
+  "lat": -86.9,
+  "lon": -4.0,
+  "core_m": 10,
+  "status": "future",
+  "why": "Large crater with permanent shadow and lit rims.",
+  "coord_source": "IAU Gazetteer (feature centre)",
+  "agency": "NASA (Artemis)",
+  "country": "USA",
+  "links": [
+   "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"
+  ],
+  "notes": "To be confirmed: the Gazetteer centre looks inconsistent with the crater diameter.",
+  "layers": {
+   "core": "haworth_core",
+   "r30": "haworth_r30",
+   "r120": "haworth_r120"
+  }
+ },
+ {
+  "rank": 19,
+  "id": "malapert",
+  "name": "Mons Malapert (Malapert Massif)",
+  "lat": -85.98,
+  "lon": -1.67,
+  "core_m": 10,
+  "status": "future",
+  "why": "A mountain with direct line of sight to Earth, good for communication.",
+  "coord_source": "IAU Gazetteer (feature centre)",
+  "agency": "NASA (Artemis)",
+  "country": "USA",
+  "links": [
+   "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"
+  ],
+  "notes": "",
+  "layers": {
+   "core": "malapert_core",
+   "r30": "malapert_r30",
+   "r120": "malapert_r120"
+  }
+ },
+ {
+  "rank": 20,
+  "id": "mouton",
+  "name": "Mons Mouton (plateau)",
+  "lat": -84.6,
+  "lon": 31.0,
+  "core_m": 20,
+  "status": "future",
+  "why": "The region where IM-2 landed: links past and future.",
+  "coord_source": "IAU Gazetteer (feature centre)",
+  "agency": "NASA (Artemis)",
+  "country": "USA",
+  "links": [
+   "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"
+  ],
+  "notes": "",
+  "layers": {
+   "core": "mouton_core",
+   "r30": "mouton_r30",
+   "r120": "mouton_r120"
+  }
+ }
+]
