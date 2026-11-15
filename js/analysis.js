@@ -32,7 +32,7 @@ export function initAnalysis(api) {
   const { THREE, scene, camera, canvas, eph } = api;
   // vários workers em paralelo (um por núcleo livre, até 6): cada um calcula uma parte dos pontos
   const NW = +new URLSearchParams(location.search).get('workers') || Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 4) - 1));   // ?workers=N força (testes)
-  const workers = Array.from({ length: NW }, () => new Worker(new URL('./analysis-worker.js?v=20261115e', import.meta.url), { type: 'module' }));
+  const workers = Array.from({ length: NW }, () => new Worker(new URL('./analysis-worker.js?v=20261115f', import.meta.url), { type: 'module' }));
   const sendAll = (msg) => workers.forEach((w) => w.postMessage(msg));
   sendAll({ type: 'init', base: new URL(api.base, location.href).href, sites: api.sites.map((s) => ({ id: s.id, lat: s.lat, lon: s.lon })) });
 
@@ -307,6 +307,10 @@ export function initAnalysis(api) {
     markObjs[k] = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: col, depthTest: false, transparent: true }));
     markObjs[k].visible = false; markObjs[k].renderOrder = 5; group.add(markObjs[k]);
   }
+  // sítios escolhidos para o relatório: pontos verdes no topo das barras
+  const repGeo = new THREE.BufferGeometry(); repGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3 * 64), 3));
+  const repPts = new THREE.Points(repGeo, new THREE.PointsMaterial({ color: 0x5fd585, size: 11, sizeAttenuation: false, depthTest: false, transparent: true }));
+  repPts.renderOrder = 6; repPts.frustumCulled = false; group.add(repPts);
   function drawMarks() {
     const sp = job ? job.spacing : 100, radius = job ? job.P.radiusKm * 1000 : 3000, w = Math.max(sp * 0.3, 3) * 2.4, H = Math.max(radius * 0.06, sp * 3) * 1.1;
     for (const k of ['sel', 'fixed', 'cmp']) {
@@ -316,6 +320,9 @@ export function initAnalysis(api) {
       if (!p.xyz) p.xyz = toFrame(p.lat, p.lon, p.h);
       o.position.set(...p.xyz); o.scale.set(w, w, H);
     }
+    const rep = (marks.report || []).map((c) => job && job.pts[c]).filter(Boolean).slice(0, 64), ra = repGeo.getAttribute('position');
+    rep.forEach((p, i) => { if (!p.xyz) p.xyz = toFrame(p.lat, p.lon, p.h); ra.setXYZ(i, p.xyz[0], p.xyz[1], p.xyz[2] + H); });
+    ra.needsUpdate = true; repGeo.setDrawRange(0, rep.length);
     api.invalidate?.();
   }
   function reposition() { if (job) for (const p of job.pts) if (p) p.xyz = null; drawRing(); draw(); drawMarks(); }

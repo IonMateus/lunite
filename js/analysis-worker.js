@@ -10,7 +10,7 @@
 // Tudo é medido no referencial leste-norte-cima do centro da área (o mesmo do patch do app.js): alturas z incluem a
 // curvatura da Lua, então "o Sol está acima do horizonte" vira comparar inclinações nesse referencial.
 import { Store, aeqdInv } from './tiles.js';
-import { makeSampler, positions, zAt } from './terrain-grid.js?v=20261115e';
+import { makeSampler, positions, zAt } from './terrain-grid.js?v=20261115f';
 
 const NA = 360;               // azimutes do perfil de horizonte (1°)
 const MAX_POINTS = 3000;      // acima disso o espaçamento dos candidatos aumenta

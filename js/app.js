@@ -3,12 +3,12 @@ import * as THREE from '../vendor/three.module.min.js';
 import { OrbitControls } from '../vendor/OrbitControls.js';
 import { Store, R, unit, enuBasis, aeqdInv, aeqdFwd } from './tiles.js';
 import { Ephem, validate } from './ephem.js';
-import { earthFrame, earthshine, GLSL_COMMON, EARTH_VERT, EARTH_FRAG, sunDiscCanvas } from './sky.js?v=20261115e';
-import { initMission } from './mission.js?v=20261115e';
-import { initAnalysis } from './analysis.js?v=20261115e';
-import { initInspect } from './inspect.js?v=20261115e';
+import { earthFrame, earthshine, GLSL_COMMON, EARTH_VERT, EARTH_FRAG, sunDiscCanvas } from './sky.js?v=20261115f';
+import { initMission } from './mission.js?v=20261115f';
+import { initAnalysis } from './analysis.js?v=20261115f';
+import { initInspect } from './inspect.js?v=20261115f';
 // versão dos arquivos JS: o index.html confere, e o ?v= nos imports evita que o navegador use arquivos antigos do cache
-window.LUNITE_BUILD = '20261115e';
+window.LUNITE_BUILD = '20261115f';
 
 const BASE = 'data/';
 const D2R = Math.PI / 180;
@@ -40,7 +40,7 @@ addEventListener('resize', resize);
 const store = new Store(BASE);
 const eph = new Ephem();
 let SITES = [], moonTex = null, earthDay = null, earthNight = null;
-const worker = new Worker(new URL('./worker.js?v=20261115e', import.meta.url), { type: 'module' });
+const worker = new Worker(new URL('./worker.js?v=20261115f', import.meta.url), { type: 'module' });
 
 function msg(text, cls = '') { const el = $('status'); el.textContent = text; el.className = cls; }
 
