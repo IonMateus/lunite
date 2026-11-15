@@ -3,6 +3,10 @@ import * as THREE from '../vendor/three.module.min.js';
 import { OrbitControls } from '../vendor/OrbitControls.js';
 import { Store, R, unit, enuBasis, aeqdInv, aeqdFwd } from './tiles.js';
 import { Ephem, validate } from './ephem.js';
+import { initMission } from './mission.js?v=20261115c';
+import { initAnalysis } from './analysis.js?v=20261115c';
+// versão dos arquivos JS: o index.html confere, e o ?v= nos imports evita que o navegador use arquivos antigos do cache
+window.LUNITE_BUILD = '20261115c';
 
 const BASE = 'data/';
 const D2R = Math.PI / 180;
@@ -31,7 +35,7 @@ addEventListener('resize', resize);
 const store = new Store(BASE);
 const eph = new Ephem();
 let SITES = [], moonTex = null, earthDay = null, earthNight = null;
-const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+const worker = new Worker(new URL('./worker.js?v=20261115c', import.meta.url), { type: 'module' });
 
 function msg(text, cls = '') { const el = $('status'); el.textContent = text; el.className = cls; }
 
@@ -243,7 +247,7 @@ worker.onmessage = (ev) => {
   if (m.type === 'patch') {
     state.building = false;
     if (m.id !== state.patchId) { if (state.queued) requestPatch(); return; }
-    buildMesh(m); state.patch = m; updateSky(); readLayers(m);
+    buildMesh(m); state.patch = m; updateSky(); readLayers(m); dispatchEvent(new CustomEvent('lunite:patch'));
     msg(`Patch ${fmtKm(m.W)} · ${m.N}×${m.N} samples · spacing ${m.spacing.toFixed(1)} m · ${m.ms.toFixed(0)} ms · ${m.tiles} tiles / ${(m.bytes / 1e6).toFixed(1)} MB downloaded so far`);
     if (state.queued) requestPatch();
   }
@@ -311,17 +315,17 @@ function enterLocal(lat, lon, level, view) {
   camera.near = W / 4000; camera.far = W * 60; camera.updateProjectionMatrix();
   const v = view || [0, -0.75 * W, 0.45 * W];
   camera.position.set(...v); controls.target.set(0, 0, 0); controls.minDistance = 30; controls.maxDistance = W * 2.5;
-  $('mode').textContent = 'Terrain'; document.body.classList.add('local');
+  $('mode').textContent = 'Terrain'; document.body.classList.add('local'); dispatchEvent(new CustomEvent('lunite:mode'));
   requestPatch(); updateSky();
 }
 function enterGlobe() {
-  state.mode = 'globe'; document.body.classList.remove('local'); $('mode').textContent = 'Globe';
+  state.mode = 'globe'; document.body.classList.remove('local'); $('mode').textContent = 'Globe'; dispatchEvent(new CustomEvent('lunite:mode'));
   camera.near = 0.005; camera.far = 100; camera.updateProjectionMatrix();
   const u = new THREE.Vector3(...unit(state.lat, state.lon));
   camera.position.copy(u.multiplyScalar(3.4)); controls.target.set(0, 0, 0); controls.minDistance = 1.02; controls.maxDistance = 12;
   updateSky();
 }
-function goSite(s) { enterLocal(s.lat, s.lon, 5); showSite(s); }
+function goSite(s) { enterLocal(s.lat, s.lon, 5); showSite(s); dispatchEvent(new CustomEvent('lunite:site', { detail: s })); }
 function showSite(s) {
   $('siteCard').innerHTML = `<h3>${s.rank}. ${s.name}</h3><p>${s.why}</p>
     <p class="dim">${s.agency} · ${s.country} · ${s.status === 'future' ? 'future candidate' : 'past landing'} · core ${s.core_m} m</p>
@@ -345,6 +349,15 @@ controls.addEventListener('change', () => {
   if (d < 0.32 * W && state.level < LEVELS.length - 1) { state.level++; controls.maxDistance = LEVELS[state.level] * 2.5; requestPatch(); }
   else if (d > 1.25 * W) { if (state.level === 0) enterGlobe(); else { state.level--; controls.maxDistance = LEVELS[state.level] * 2.5; requestPatch(); } }
 });
+// lat/lon (graus) do ponto da Lua sob o cursor, ou null se o cursor não está sobre a Lua
+function pickLatLon(cx, cy) {
+  const r = canvas.getBoundingClientRect(), p = new THREE.Vector2(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+  const rc = new THREE.Raycaster(); rc.setFromCamera(p, camera);
+  if (state.mode === 'globe') { const hit = rc.intersectObject(globe)[0]; if (!hit) return null; const q = hit.point.clone().normalize(); return { lat: Math.asin(q.z) / D2R, lon: Math.atan2(q.y, q.x) / D2R }; }
+  if (!terrain) return null;
+  const hit = rc.intersectObject(terrain)[0]; if (!hit) return null;
+  const [lat, lon] = aeqdInv(state.lat, state.lon, hit.point.x, hit.point.y); return { lat, lon };
+}
 canvas.addEventListener('dblclick', (ev) => {
   const r = canvas.getBoundingClientRect(), p = new THREE.Vector2(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
   const rc = new THREE.Raycaster(); rc.setFromCamera(p, camera);
@@ -387,7 +400,7 @@ function wireUI() {
   $('panelToggle').onclick = () => document.body.classList.toggle('panels');
   const list = $('siteList');
   for (const s of SITES) {
-    const b = document.createElement('button'); b.className = 'srow';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'srow'; b.dataset.id = s.id;
     b.innerHTML = `<span class="rk">${s.rank}</span><span class="nm">${s.name}</span><span class="tag ${s.status}">${s.status}</span><span class="res">${s.core_m} m</span>`;
     b.onclick = () => goSite(s); list.appendChild(b);
   }
@@ -433,6 +446,8 @@ async function main() {
   await loadGlobeSlopes();
   for (const s of SITES) s._label = siteLabel(s);
   wireUI(); dataSummary();
+  initMission({ sites: SITES, goSite, home: () => enterGlobe(), mode: () => state.mode, goTo: (lat, lon) => enterLocal(lat, lon, 5), pick: pickLatLon, setTime, time: () => state.t });
+  initAnalysis({ THREE, scene: localScene, camera, canvas, eph, setTime, base: BASE, sites: SITES, frame: () => ({ lat: state.lat, lon: state.lon, exag: state.exag, mode: state.mode }) });
   state.lat = -60; state.lon = 20; enterGlobe(); setTime(state.t);
   runValidation();
   msg('Ready. Drag to rotate, scroll to zoom, double-click to open the terrain there, or pick a curated site.');
