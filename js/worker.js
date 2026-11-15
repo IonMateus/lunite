@@ -2,7 +2,7 @@
 // patch  : heights on an N x N grid (azimuthal-equidistant around the centre) + a coarse context grid 8x wider
 // shade  : for every vertex, the Sun's margin over the terrain horizon in disc diameters (0..1 = fraction of the disc visible)
 import { Store } from './tiles.js';
-import { makeSampler, positions, zAt } from './terrain-grid.js?v=20261115f';
+import { makeSampler, positions, zAt } from './terrain-grid.js?v=20261115g';
 
 let store = null, P = null;   // P = last patch kept for re-shading when the time changes
 
@@ -39,15 +39,15 @@ function shade(sun) {
   const F = P.fine, N = F.N, vis = new Float32Array(N * N);
   const hl = Math.hypot(sun[0], sun[1]) || 1e-9, dx = sun[0] / hl, dy = sun[1] / hl;
   const sunEl = Math.atan2(sun[2], hl) * 180 / Math.PI, half = 0.2665;
-  const tanStop = Math.tan((sunEl + half + 1.5) * Math.PI / 180);   // segue até o horizonte passar 1,5° do Sol: margem correta perto da borda
+  const tanStop = Math.tan((sunEl + half + 1.5) * Math.PI / 180);   // march until the horizon is 1.5° past the Sun: correct margin near the edge
   for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
     const k = i * N + j;
     if (sunEl < -3) { vis[k] = -20; continue; }
     const e = -F.W / 2 + j * F.spacing, n = F.W / 2 - i * F.spacing;
     // local tilt of "up" across the patch is folded in: elevation is measured in the centre frame for both Sun and terrain
     const hz = horizonDeg(e, n, F.z[k] + 0.5, dx, dy, tanStop);
-    // margem do Sol sobre o horizonte, em diâmetros do disco (0..1 = penumbra). Não é cortada em [0,1]: o sombreador
-    // interpola entre vértices e corta por pixel, o que deixa a borda da sombra nítida em vez de borrada.
+    // margin of the Sun over the horizon, in disc diameters (0..1 = penumbra). Not clamped to [0,1]: the shader
+    // interpolates between vertices and clamps per pixel, which keeps the shadow edge sharp instead of blurred.
     vis[k] = Math.max(-20, Math.min(20, (sunEl - hz) / (2 * half) + 0.5));
   }
   return vis;

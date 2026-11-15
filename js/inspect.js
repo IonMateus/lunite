@@ -1,20 +1,20 @@
-// inspect.js: etapa 4 do fluxo — depois da filtragem, selecionar sítios, fixar um e comparar.
+// inspect.js: flow step 4 and the final report — after filtering, select sites, pin one, compare, export.
 //
-//  - Clique numa barra seleciona o sítio (caixa branca) e abre um chip com "Fixar" e "Comparar".
-//  - Fixar: card com os dados do sítio e os gráficos do Sol e da Terra contra o horizonte, em datas terrestres.
-//  - Comparar com um sítio fixado: segundo card ao lado, com a diferença de cada número em relação ao fixado.
-//  - Comparar sem sítio fixado: janelinha com uma tabela (ordenável) de todos os sítios enviados para comparação.
-//    As duas comparações não coexistem: com a tabela aberta não dá para fixar; com um sítio fixado, comparar vai para o card.
+//  - Clicking a bar selects the site (white box) and opens a chip with "Pin" and "Compare".
+//  - Pin: card with the site's data and the Sun and Earth charts against the horizon, in Earth dates.
+//  - Compare with a pinned site: a second card next to it, with the difference of every number from the pinned one.
+//  - Compare without a pinned site: a small window with a sortable table of every site sent for comparison.
+//    The two comparisons never coexist: with the table open you cannot pin; with a pinned site, Compare goes to the card.
 //
-//  - Cards e tabela são janelas móveis (arraste pelo título). "Destacar" abre o card numa janela própria do navegador,
-//    que pode ir para outro monitor.
-//  - Relatório (etapa final): Alt+clique numa barra, "+ Relatório" no chip/card, ou arrastar um card ou uma linha da tabela
-//    até a bandeja "Relatório"; "Gerar relatório em PDF" monta Inputs, Métricas (com legendas) e uma seção por sítio.
+//  - Cards and the table are movable windows (drag the title). "Pop out" opens the card in its own browser window,
+//    which can go to another monitor.
+//  - Report (final step): Alt+click a bar, "+ Report" on the chip/card, or drag a card or a table row onto the "Report"
+//    tray; "Create PDF report" builds Inputs, Metrics (with legends) and one section per site.
 //
-//   initInspect(api)  api = { an (API do analysis.js), canvas, setTime(ms), time() -> ms, mode() -> 'globe' | 'local' }
+//   initInspect(api)  api = { an (analysis.js API), canvas, setTime(ms), time() -> ms, mode() -> 'globe' | 'local' }
 const $ = (id) => document.getElementById(id);
-const fmtPct = (v) => v.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
-const fmtNum = (v, d = 1) => v.toLocaleString('pt-BR', { maximumFractionDigits: d });
+const fmtPct = (v) => v.toLocaleString('en-US', { maximumFractionDigits: 1 }) + '%';
+const fmtNum = (v, d = 1) => v.toLocaleString('en-US', { maximumFractionDigits: d });
 function fmtDur(h) {   // 3d14h · 12h · 45min
   if (!isFinite(h)) return '–';
   const a = Math.abs(h), s = h < 0 ? '−' : '';
@@ -23,37 +23,39 @@ function fmtDur(h) {   // 3d14h · 12h · 45min
   const d = Math.floor(a / 24), r = Math.round(a - d * 24);
   return s + d + 'd' + (r ? String(r).padStart(2, '0') + 'h' : '');
 }
-const fmtLL = (p) => `${Math.abs(p.lat).toFixed(3)}°${p.lat < 0 ? 'S' : 'N'} ${Math.abs(p.lon).toFixed(3)}°${p.lon < 0 ? 'O' : 'L'}`;
-const fmtWhen = (ms) => { const d = new Date(ms); return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; };
+const fmtLL = (p) => `${Math.abs(p.lat).toFixed(3)}°${p.lat < 0 ? 'S' : 'N'} ${Math.abs(p.lon).toFixed(3)}°${p.lon < 0 ? 'W' : 'E'}`;
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtDay = (d) => `${MON[d.getUTCMonth()]} ${d.getUTCDate()}`;
+const fmtWhen = (ms) => { const d = new Date(ms); return `${fmtDay(d)} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; };
 const score = (p) => (p.sunPct + p.commPct) / 2;
 
 export function initInspect(api) {
   const { an, canvas } = api;
   let sel = null, fixed = null, cmp = null, table = [], sortKey = 'score', sortDir = -1, info = null, report = [];
 
-  // ---------------------------------------------------------------- seleção no terreno
+  // ---------------------------------------------------------------- selection on the terrain
   let down = null;
   canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
   canvas.addEventListener('pointerup', (e) => {
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5 || api.mode() !== 'local' || !an.info()) return;
     const p = an.pickBar(e.clientX, e.clientY);
-    if (e.altKey) { if (p) toggleReport(p.c); return; }   // Alt+clique: entra/sai do relatório sem mexer na seleção
+    if (e.altKey) { if (p) toggleReport(p.c); return; }   // Alt+click: in/out of the report without touching the selection
     select(p ? p.c : null);
   });
   function select(c) { sel = c; marks(); chip(); }
   function marks() { an.setMarks({ sel, fixed: fixed && fixed.c, cmp: cmp && cmp.c, report }); }
 
-  // chip com as ações, preso ao topo da barra selecionada
+  // chip with the actions, attached to the top of the selected bar
   const chipEl = $('selChip');
   function chip() {
     if (sel == null) { chipEl.hidden = true; return; }
     const p = an.point(sel); if (!p) { chipEl.hidden = true; return; }
-    $('scInfo').innerHTML = `${fmtLL(p)}<br>Score <b>${fmtPct(score(p))}</b> · Sol ${fmtPct(p.sunPct)} · Terra ${fmtPct(p.commPct)}`;
+    $('scInfo').innerHTML = `${fmtLL(p)}<br>Score <b>${fmtPct(score(p))}</b> · Sun ${fmtPct(p.sunPct)} · Earth ${fmtPct(p.commPct)}`;
     const tableOpen = !$('cmpWin').hidden;
     $('scFix').disabled = tableOpen || (fixed && fixed.c === sel);
     $('scCmp').disabled = (fixed && fixed.c === sel) || (cmp && cmp.c === sel) || (!fixed && table.includes(sel));
-    $('scRep').textContent = report.includes(sel) ? '− Relatório' : '+ Relatório';
-    $('scWhy').textContent = tableOpen ? 'Feche a tabela de comparação para fixar um sítio.' : fixed && fixed.c === sel ? 'Este é o sítio fixado.' : fixed ? 'Comparar abre o card ao lado do fixado.' : 'Sem sítio fixado, comparar adiciona o sítio à tabela.';
+    $('scRep').textContent = report.includes(sel) ? '− Report' : '+ Report';
+    $('scWhy').textContent = tableOpen ? 'Close the comparison table to pin a site.' : fixed && fixed.c === sel ? 'This is the pinned site.' : fixed ? 'Compare opens a card next to the pinned one.' : 'With no pinned site, Compare adds the site to the table.';
     chipEl.hidden = false; placeChip();
   }
   function placeChip() {
@@ -67,11 +69,11 @@ export function initInspect(api) {
   $('scCmp').onclick = () => { if (sel != null) doCompare(sel); };
   $('scRep').onclick = () => { if (sel != null) toggleReport(sel); };
 
-  // ---------------------------------------------------------------- fixar / comparar
+  // ---------------------------------------------------------------- pin / compare
   async function doFix(c) {
     if (!$('cmpWin').hidden) return;
     if (cmp && cmp.c === c) cmp = null;
-    fixed = { c, p: an.point(c), d: null }; sel = null;   // a ação concluída fecha o chip; a caixa ciano marca o fixado
+    fixed = { c, p: an.point(c), d: null }; sel = null;   // the finished action closes the chip; the cyan box marks the pinned site
     marks(); chip(); render();
     fixed.d = await load(c); render();
   }
@@ -91,7 +93,7 @@ export function initInspect(api) {
     catch (e) { console.warn(e); return null; }
   }
 
-  // números de um sítio a partir da série do worker (janela fixada, passo stepH)
+  // a site's numbers from the worker series (locked window, step stepH)
   function metricsOf(p, m) {
     const N = m.sunEl.length, h = m.stepH, t0 = info.t0;
     const sv = new Uint8Array(N), cv = new Uint8Array(N);
@@ -111,29 +113,29 @@ export function initInspect(api) {
     };
   }
 
-  // linhas do card: [rótulo, valor(p, d), melhor ('hi' maior é melhor, 'lo' menor é melhor), formato da diferença]
+  // card rows: [label, value(p, d), better ('hi' higher is better, 'lo' lower is better), value format, difference format]
   const durD = (v) => (v > 0 ? '+' : '') + fmtDur(v);
   const ROWS = {
     sun: [
-      ['Contato com o Sol', (p) => p.sunPct, 'hi', (v) => fmtPct(v), (v) => (v > 0 ? '+' : '') + fmtNum(v) + ' p.p.'],
-      ['Horas de Sol na janela', (p, d) => d && d.sunH, 'hi', fmtDur, durD],
-      ['Maior escuridão contínua', (p) => p.maxDarkH, 'lo', fmtDur, durD],
-      ['Períodos com Sol', (p, d) => d && d.sRuns.length, null, (v) => String(v), (v) => (v > 0 ? '+' : '') + v],
-      ['Próximo pôr do Sol', (p, d) => d && (d.nextSun.up ? d.nextSun.h : null), 'hi', fmtDur, durD, (p, d) => !d ? null : !d.nextSun.up ? (isFinite(d.nextSun.h) ? `abaixo do horizonte · nasce em ${fmtDur(d.nextSun.h)}` : 'não nasce nesta janela') : !isFinite(d.nextSun.h) ? 'não se põe nesta janela' : null],
-      ['Elevação média do Sol (quando visível)', (p, d) => d && d.meanEl, 'hi', (v) => fmtNum(v, 2) + '°', (v) => (v > 0 ? '+' : '') + fmtNum(v, 2) + '°'],
-      ['Folga média sobre o relevo', (p, d) => d && d.meanClear, 'hi', (v) => fmtNum(v, 2) + '°', (v) => (v > 0 ? '+' : '') + fmtNum(v, 2) + '°'],
+      ['Sunlight', (p) => p.sunPct, 'hi', (v) => fmtPct(v), (v) => (v > 0 ? '+' : '') + fmtNum(v) + ' pp'],
+      ['Sunlit hours in the window', (p, d) => d && d.sunH, 'hi', fmtDur, durD],
+      ['Longest continuous darkness', (p) => p.maxDarkH, 'lo', fmtDur, durD],
+      ['Sunlit periods', (p, d) => d && d.sRuns.length, null, (v) => String(v), (v) => (v > 0 ? '+' : '') + v],
+      ['Next sunset', (p, d) => d && (d.nextSun.up ? d.nextSun.h : null), 'hi', fmtDur, durD, (p, d) => !d ? null : !d.nextSun.up ? (isFinite(d.nextSun.h) ? `below the horizon · rises in ${fmtDur(d.nextSun.h)}` : 'does not rise in this window') : !isFinite(d.nextSun.h) ? 'does not set in this window' : null],
+      ['Mean Sun elevation (when visible)', (p, d) => d && d.meanEl, 'hi', (v) => fmtNum(v, 2) + '°', (v) => (v > 0 ? '+' : '') + fmtNum(v, 2) + '°'],
+      ['Mean clearance over terrain', (p, d) => d && d.meanClear, 'hi', (v) => fmtNum(v, 2) + '°', (v) => (v > 0 ? '+' : '') + fmtNum(v, 2) + '°'],
     ],
     earth: [
-      ['Comunicação com a Terra', (p) => p.commPct, 'hi', (v) => fmtPct(v), (v) => (v > 0 ? '+' : '') + fmtNum(v) + ' p.p.'],
-      ['Horas de comunicação na janela', (p, d) => d && d.comH, 'hi', fmtDur, durD],
-      ['Maior apagão contínuo', (p) => p.maxBlackoutH, 'lo', fmtDur, durD],
-      ['Janelas de comunicação', (p, d) => d && d.cRuns.length, null, (v) => String(v), (v) => (v > 0 ? '+' : '') + v],
-      ['Próximo pôr da Terra', (p, d) => d && (d.nextEarth.up ? d.nextEarth.h : null), 'hi', fmtDur, durD, (p, d) => !d ? null : !d.nextEarth.up ? (isFinite(d.nextEarth.h) ? `sem contato · volta em ${fmtDur(d.nextEarth.h)}` : 'sem contato nesta janela') : !isFinite(d.nextEarth.h) ? 'não se põe nesta janela' : null],
+      ['Direct-to-Earth', (p) => p.commPct, 'hi', (v) => fmtPct(v), (v) => (v > 0 ? '+' : '') + fmtNum(v) + ' pp'],
+      ['Contact hours in the window', (p, d) => d && d.comH, 'hi', fmtDur, durD],
+      ['Longest continuous blackout', (p) => p.maxBlackoutH, 'lo', fmtDur, durD],
+      ['Contact windows', (p, d) => d && d.cRuns.length, null, (v) => String(v), (v) => (v > 0 ? '+' : '') + v],
+      ['Next Earthset', (p, d) => d && (d.nextEarth.up ? d.nextEarth.h : null), 'hi', fmtDur, durD, (p, d) => !d ? null : !d.nextEarth.up ? (isFinite(d.nextEarth.h) ? `no contact · returns in ${fmtDur(d.nextEarth.h)}` : 'no contact in this window') : !isFinite(d.nextEarth.h) ? 'does not set in this window' : null],
     ],
     ter: [
-      ['Inclinação do relevo', (p) => p.slope, 'lo', (v) => fmtNum(v) + '°', (v) => (v > 0 ? '+' : '') + fmtNum(v) + '°'],
+      ['Terrain slope', (p) => p.slope, 'lo', (v) => fmtNum(v) + '°', (v) => (v > 0 ? '+' : '') + fmtNum(v) + '°'],
       ['Altitude (LOLA)', (p) => p.h, null, (v) => fmtNum(v, 0) + ' m', (v) => (v > 0 ? '+' : '') + fmtNum(v, 0) + ' m'],
-      ['Distância do centro da área', (p) => p.dist, null, (v) => fmtNum(v / 1000, 2) + ' km', (v) => (v > 0 ? '+' : '') + fmtNum(v / 1000, 2) + ' km'],
+      ['Distance from area centre', (p) => p.dist, null, (v) => fmtNum(v / 1000, 2) + ' km', (v) => (v > 0 ? '+' : '') + fmtNum(v / 1000, 2) + ' km'],
     ],
   };
 
@@ -142,7 +144,7 @@ export function initInspect(api) {
     const delta = (v, rv, better, fmt) => {
       if (!isCmp || v == null || rv == null || !isFinite(v) || !isFinite(rv)) return '';
       const dv = v - rv; if (Math.abs(dv) < 1e-9) return '<i class="d-eq">(=)</i>';
-      // verde = melhor que o fixado, vermelho = pior (para escuridão, apagão e inclinação, menos é melhor)
+      // green = better than the pinned site, red = worse (for darkness, blackout and slope, less is better)
       const good = better === 'lo' ? dv < 0 : better === 'hi' ? dv > 0 : null;
       return `<i class="${good === null ? 'd-eq' : good ? 'd-good' : 'd-bad'}">(${fmt(dv)})</i>`;
     };
@@ -153,29 +155,29 @@ export function initInspect(api) {
     }).join('');
     const sc = score(p), rsc = ref ? score(ref.p) : null;
     const inRep = report.includes(X.c), pop = X.win && !X.win.closed;
-    return `<header class="drag"><span class="lbl">${isCmp ? 'Sítio comparado' : 'Sítio fixado · referência'}</span>
-        <span class="c-tools">${pop ? '' : `<button type="button" class="b" data-pop="${kind}" title="Abrir numa janela separada (pode ir para outro monitor)">Destacar</button>`}
-        <button type="button" class="b" data-rep="${X.c}">${inRep ? '− Relatório' : '+ Relatório'}</button></span>
-        <button type="button" class="sc-x" data-close="${kind}" aria-label="Fechar">×</button></header>
-      ${pop ? '' : `<span class="c-grip" draggable="true" data-drag="${X.c}" title="Arraste até a bandeja Relatório">⠿ arrastar para o relatório</span>`}
+    return `<header class="drag"><span class="lbl">${isCmp ? 'Compared site' : 'Pinned site · reference'}</span>
+        <span class="c-tools">${pop ? '' : `<button type="button" class="b" data-pop="${kind}" title="Open in a separate window (can go to another monitor)">Pop out</button>`}
+        <button type="button" class="b" data-rep="${X.c}">${inRep ? '− Report' : '+ Report'}</button></span>
+        <button type="button" class="sc-x" data-close="${kind}" aria-label="Close">×</button></header>
+      ${pop ? '' : `<span class="c-grip" draggable="true" data-drag="${X.c}" title="Drag onto the Report tray">⠿ drag to report</span>`}
       <div class="c-coord">${fmtLL(p)}</div>
-      <div class="c-score">Viability Score <b>${fmtPct(sc)}</b>${delta(sc, rsc, 'hi', (v) => (v > 0 ? '+' : '') + fmtNum(v) + ' p.p.')}</div>
-      <div class="c-sec sun">Sol e energia</div>${rows('sun')}
-      <canvas class="c-chart" data-chart="sun" aria-label="Elevação do Sol e do horizonte ao longo da janela"></canvas>
-      <div class="c-legend"><span><i style="background:#ffc84a"></i>Sol visível</span><span><i style="background:rgba(255,200,74,.35)"></i>Sol atrás do relevo</span><span><i style="background:#5b6472"></i>horizonte do relevo</span></div>
+      <div class="c-score">Viability Score <b>${fmtPct(sc)}</b>${delta(sc, rsc, 'hi', (v) => (v > 0 ? '+' : '') + fmtNum(v) + ' pp')}</div>
+      <div class="c-sec sun">Sun &amp; power</div>${rows('sun')}
+      <canvas class="c-chart" data-chart="sun" aria-label="Sun and horizon elevation over the window"></canvas>
+      <div class="c-legend"><span><i style="background:#ffc84a"></i>Sun visible</span><span><i style="background:rgba(255,200,74,.35)"></i>Sun behind terrain</span><span><i style="background:#5b6472"></i>terrain horizon</span></div>
       ${d ? `<div class="c-ivals">${ivals(d.sRuns, d)}</div>` : ''}
-      <div class="c-sec earth">Terra e comunicação</div>${rows('earth')}
-      <canvas class="c-chart" data-chart="earth" aria-label="Elevação da Terra e do horizonte ao longo da janela"></canvas>
-      <div class="c-legend"><span><i style="background:#7fb6ff"></i>comunicação</span><span><i style="background:rgba(127,182,255,.35)"></i>sem contato</span><span><i style="background:#5b6472"></i>horizonte do relevo</span></div>
+      <div class="c-sec earth">Earth &amp; communication</div>${rows('earth')}
+      <canvas class="c-chart" data-chart="earth" aria-label="Earth and horizon elevation over the window"></canvas>
+      <div class="c-legend"><span><i style="background:#7fb6ff"></i>contact</span><span><i style="background:rgba(127,182,255,.35)"></i>no contact</span><span><i style="background:#5b6472"></i>terrain horizon</span></div>
       ${d ? `<div class="c-ivals">${ivals(d.cRuns, d)}</div>` : ''}
-      <div class="c-sec ter">Terreno</div>${rows('ter')}
-      ${d ? '' : '<div class="c-loading">Calculando a série do Sol e da Terra…</div>'}
-      <div class="dim" style="margin-top:6px;font-size:10.5px">Clique num gráfico para levar o relógio àquele instante.</div>`;
+      <div class="c-sec ter">Terrain</div>${rows('ter')}
+      ${d ? '' : '<div class="c-loading">Computing the Sun and Earth series…</div>'}
+      <div class="dim" style="margin-top:6px;font-size:10.5px">Click a chart to move the clock to that moment.</div>`;
   }
-  function ivals(runs, d) {   // primeiros períodos, em datas terrestres (UTC)
-    if (!runs.length) return 'nenhum período na janela';
+  function ivals(runs, d) {   // first periods, in Earth dates (UTC)
+    if (!runs.length) return 'no period in this window';
     const show = runs.slice(0, 3).map(([a, b]) => `${fmtWhen(d.t0 + a * d.h * 3600e3)} → ${fmtWhen(d.t0 + b * d.h * 3600e3)} (${fmtDur((b - a) * d.h)})`);
-    return show.join('<br>') + (runs.length > 3 ? `<br>+ ${runs.length - 3} períodos` : '');
+    return show.join('<br>') + (runs.length > 3 ? `<br>+ ${runs.length - 3} more` : '');
   }
 
   function render() {
@@ -194,14 +196,14 @@ export function initInspect(api) {
     }
     charts();
   }
-  // "Destacar": o card vai para uma janela própria do navegador (pode ser levada a outro monitor) e volta ao fechá-la
+  // "Pop out": the card moves to its own browser window (can be taken to another monitor) and comes back when it closes
   function popOut(kind) {
     const X = kind === 'fixed' ? fixed : cmp; if (!X) return;
     const w = window.open('', 'lunite-' + kind, 'popup=yes,width=400,height=860');
-    if (!w) { alert('O navegador bloqueou a janela. Permita pop-ups para este site e tente de novo.'); return; }
+    if (!w) { alert('The browser blocked the window. Allow pop-ups for this site and try again.'); return; }
     const css = [...document.querySelectorAll('style')].map((st) => st.textContent).join('\n');
     w.document.open();
-    w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Lunite · ${kind === 'fixed' ? 'Sítio fixado' : 'Sítio comparado'}</title>
+    w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Lunite · ${kind === 'fixed' ? 'Pinned site' : 'Compared site'}</title>
       <style>${css}
       html,body{overflow:auto;height:auto;background:#05070a} body{padding:10px}
       .site-card{position:static !important;width:auto !important;max-height:none !important;transform:none !important}
@@ -212,11 +214,11 @@ export function initInspect(api) {
   }
   function close(kind) {
     for (const X of kind === 'fixed' ? [fixed, cmp] : [cmp]) if (X && X.win && !X.win.closed) { const w = X.win; X.win = null; w.close(); }
-    if (kind === 'fixed') { fixed = null; cmp = null; } else cmp = null;   // sem o fixado, a comparação perde a referência
+    if (kind === 'fixed') { fixed = null; cmp = null; } else cmp = null;   // without the pinned site, the comparison loses its reference
     render(); marks(); chip();
   }
 
-  // ---------------------------------------------------------------- gráficos (elevação × tempo, com o horizonte do relevo)
+  // ---------------------------------------------------------------- charts (elevation × time, with the terrain horizon)
   let lastT = -1;
   function charts() {
     for (const [X, id] of [[fixed, 'cardFixed'], [cmp, 'cardCmp']]) {
@@ -236,23 +238,23 @@ export function initInspect(api) {
     let lo = Infinity, hi = -Infinity; for (let i = 0; i < N; i++) { lo = Math.min(lo, el[i], hz[i]); hi = Math.max(hi, el[i], hz[i]); }
     const pad = Math.max(0.3, (hi - lo) * 0.08); lo -= pad; hi += pad;
     const X = (i) => L + (W - L - R) * i / (N - 1), Y = (v) => T + (H - T - B) * (hi - v) / (hi - lo);
-    // dias (00:00 UTC) no eixo x
+    // days (00:00 UTC) on the x axis
     x.font = '9px ui-monospace, monospace'; x.fillStyle = th.text; x.strokeStyle = th.grid; x.lineWidth = 1;
     const days = Math.round(N * d.h / 24), every = Math.max(1, Math.ceil(days / 6));
     for (let k = 0; k <= days; k++) {
       const i = (k * 24) / d.h; if (i > N - 1) break; const xx = X(i);
       x.beginPath(); x.moveTo(xx, T); x.lineTo(xx, H - B); x.stroke();
-      if (k % every === 0) { const t = new Date(d.t0 + k * 86400e3); x.fillText(`${String(t.getUTCDate()).padStart(2, '0')}/${String(t.getUTCMonth() + 1).padStart(2, '0')}`, xx + 2, H - 4); }
+      if (k % every === 0) { const t = new Date(d.t0 + k * 86400e3); x.fillText(fmtDay(t), xx + 2, H - 4); }
     }
-    // eixo y: graus
+    // y axis: degrees
     for (const v of [hi - pad, lo + pad, 0]) { if (v < lo || v > hi) continue; x.fillText(fmtNum(v, 1) + '°', 2, Y(v) + 3); x.beginPath(); x.strokeStyle = v === 0 ? th.zero : th.grid; x.moveTo(L, Y(v)); x.lineTo(W - R, Y(v)); x.stroke(); }
-    // relevo (horizonte no azimute do astro): área cinza
+    // terrain (horizon at the body azimuth): grey area
     x.beginPath(); x.moveTo(X(0), H - B); for (let i = 0; i < N; i++) x.lineTo(X(i), Y(hz[i])); x.lineTo(X(N - 1), H - B); x.closePath();
     x.fillStyle = th.terrain; x.fill();
-    // astro: forte quando visível, apagado quando atrás do relevo
+    // body: solid when visible, faint when behind the terrain
     x.lineWidth = 2;
     for (let i = 1; i < N; i++) { x.strokeStyle = vis[i] && vis[i - 1] ? `rgb(${col})` : `rgba(${col},${th.faint})`; x.beginPath(); x.moveTo(X(i - 1), Y(el[i - 1])); x.lineTo(X(i), Y(el[i])); x.stroke(); }
-    // instante do visualizador
+    // viewer time
     const t = api.time(), fi = (t - d.t0) / (d.h * 3600e3);
     if (th.cursor && fi >= 0 && fi <= N - 1) { x.strokeStyle = th.cursor; x.lineWidth = 1; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(X(fi), T); x.lineTo(X(fi), H - B); x.stroke(); x.setLineDash([]); }
     cv._map = { L, R, N, d };
@@ -263,28 +265,28 @@ export function initInspect(api) {
     api.setTime(m.d.t0 + f * (m.N - 1) * m.d.h * 3600e3);
   }
 
-  // ---------------------------------------------------------------- tabela (comparação sem sítio fixado)
+  // ---------------------------------------------------------------- table (comparison without a pinned site)
   const COLS = [
-    ['site', 'Sítio', (p) => fmtLL(p), null, null],
+    ['site', 'Site', (p) => fmtLL(p), null, null],
     ['score', 'Viability Score', (p) => score(p), 'hi', fmtPct],
-    ['sun', 'Sol', (p) => p.sunPct, 'hi', fmtPct],
-    ['dark', 'Maior escuridão', (p) => p.maxDarkH, 'lo', fmtDur],
-    ['comm', 'Terra', (p) => p.commPct, 'hi', fmtPct],
-    ['black', 'Maior apagão', (p) => p.maxBlackoutH, 'lo', fmtDur],
-    ['slope', 'Inclinação', (p) => p.slope, 'lo', (v) => fmtNum(v) + '°'],
+    ['sun', 'Sun', (p) => p.sunPct, 'hi', fmtPct],
+    ['dark', 'Longest darkness', (p) => p.maxDarkH, 'lo', fmtDur],
+    ['comm', 'Earth', (p) => p.commPct, 'hi', fmtPct],
+    ['black', 'Longest blackout', (p) => p.maxBlackoutH, 'lo', fmtDur],
+    ['slope', 'Slope', (p) => p.slope, 'lo', (v) => fmtNum(v) + '°'],
     ['alt', 'Altitude', (p) => p.h, null, (v) => fmtNum(v, 0) + ' m'],
-    ['dist', 'Distância do centro', (p) => p.dist, null, (v) => fmtNum(v / 1000, 2) + ' km'],
+    ['dist', 'Distance from centre', (p) => p.dist, null, (v) => fmtNum(v / 1000, 2) + ' km'],
   ];
   function openTable() { $('cmpWin').hidden = false; drawTable(); }
   function drawTable() {
     const rows = table.map((c) => an.point(c)).filter(Boolean);
     const col = COLS.find((c) => c[0] === sortKey) || COLS[1];
     if (col[0] !== 'site') rows.sort((a, b) => (col[2](a) - col[2](b)) * sortDir);
-    const best = {};   // melhor valor de cada coluna (em verde)
+    const best = {};   // best value of each column (in green)
     for (const [k, , get, better] of COLS) if (better && rows.length > 1) { const vs = rows.map(get); best[k] = better === 'hi' ? Math.max(...vs) : Math.min(...vs); }
-    $('cmpTitle').textContent = `Comparação de sítios (${rows.length})`;
+    $('cmpTitle').textContent = `Site comparison (${rows.length})`;
     $('cmpTable').innerHTML = `<thead><tr>${COLS.map(([k, label]) => `<th data-k="${k}"${k === sortKey ? ` aria-sort="${sortDir > 0 ? 'ascending' : 'descending'}"` : ''}>${label}</th>`).join('')}<th></th></tr></thead>
-      <tbody>${rows.map((p) => `<tr data-c="${p.c}" draggable="true"${p.c === sel ? ' class="sel"' : ''}>${COLS.map(([k, , get, , fmt]) => { const v = get(p); return `<td${best[k] != null && v === best[k] ? ' class="best"' : ''}>${fmt ? fmt(v) : v}</td>`; }).join('')}<td><button type="button" class="sc-x" data-rm="${p.c}" aria-label="Remover">×</button></td></tr>`).join('')}</tbody>`;
+      <tbody>${rows.map((p) => `<tr data-c="${p.c}" draggable="true"${p.c === sel ? ' class="sel"' : ''}>${COLS.map(([k, , get, , fmt]) => { const v = get(p); return `<td${best[k] != null && v === best[k] ? ' class="best"' : ''}>${fmt ? fmt(v) : v}</td>`; }).join('')}<td><button type="button" class="sc-x" data-rm="${p.c}" aria-label="Remove">×</button></td></tr>`).join('')}</tbody>`;
     $('cmpTable').querySelectorAll('th[data-k]').forEach((th) => th.onclick = () => { const k = th.dataset.k; if (k === 'site') return; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = COLS.find((c) => c[0] === k)[3] === 'lo' ? 1 : -1; } drawTable(); });
     $('cmpTable').querySelectorAll('tbody tr').forEach((tr) => tr.onclick = (e) => { if (e.target.dataset.rm) return; select(+tr.dataset.c); drawTable(); });
     $('cmpTable').querySelectorAll('[data-rm]').forEach((b) => b.onclick = () => { table = table.filter((c) => c !== +b.dataset.rm); drawTable(); chip(); });
@@ -292,7 +294,7 @@ export function initInspect(api) {
   }
   $('cmpClose').onclick = () => { $('cmpWin').hidden = true; chip(); };
 
-  // ---------------------------------------------------------------- janelas móveis (arrastar pelo título)
+  // ---------------------------------------------------------------- movable windows (drag the title)
   function draggable(el) {
     el.addEventListener('pointerdown', (e) => {
       const h = e.target.closest('header.drag'); if (!h || e.target.closest('button, [draggable="true"], input, select')) return;
@@ -310,62 +312,71 @@ export function initInspect(api) {
   }
   ['cardFixed', 'cardCmp', 'cmpWin'].forEach((id) => draggable($(id)));
 
-  // ---------------------------------------------------------------- relatório: escolher sítios
+  // ---------------------------------------------------------------- report: choosing sites
   function toggleReport(c) {
     if (report.includes(c)) report = report.filter((x) => x !== c); else report.push(c);
     renderTray(); marks(); chip(); render();
   }
-  function dragSite(e, c) { e.dataTransfer.setData('text/x-lunite-site', String(c)); e.dataTransfer.setData('text/plain', 'Sítio ' + c); e.dataTransfer.effectAllowed = 'copy'; }
+  function dragSite(e, c) { e.dataTransfer.setData('text/x-lunite-site', String(c)); e.dataTransfer.setData('text/plain', 'Site ' + c); e.dataTransfer.effectAllowed = 'copy'; }
   const tray = $('repTray');
   tray.addEventListener('dragover', (e) => { if ([...e.dataTransfer.types].includes('text/x-lunite-site')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; tray.classList.add('over'); } });
   tray.addEventListener('dragleave', (e) => { if (!tray.contains(e.relatedTarget)) tray.classList.remove('over'); });
   tray.addEventListener('drop', (e) => { e.preventDefault(); tray.classList.remove('over'); const c = +e.dataTransfer.getData('text/x-lunite-site'); if (Number.isFinite(c) && !report.includes(c) && an.point(c)) toggleReport(c); });
   function renderTray() {
     tray.hidden = !an.info();
-    $('repN').textContent = report.length ? `(${report.length} ${report.length === 1 ? 'sítio' : 'sítios'})` : '';
-    $('repList').innerHTML = report.map((c, i) => { const p = an.point(c); return p ? `<div class="rep-item"><b>${i + 1}</b><span>${fmtLL(p)}</span><span>${fmtPct(score(p))}</span><button type="button" class="sc-x" data-unrep="${c}" aria-label="Tirar do relatório">×</button></div>` : ''; }).join('');
+    $('repN').textContent = report.length ? `(${report.length} ${report.length === 1 ? 'site' : 'sites'})` : '';
+    $('repList').innerHTML = report.map((c, i) => { const p = an.point(c); return p ? `<div class="rep-item"><b>${i + 1}</b><span>${fmtLL(p)}</span><span>${fmtPct(score(p))}</span><button type="button" class="sc-x" data-unrep="${c}" aria-label="Remove from report">×</button></div>` : ''; }).join('');
     $('repList').querySelectorAll('[data-unrep]').forEach((b) => b.onclick = () => toggleReport(+b.dataset.unrep));
     $('repGo').disabled = !report.length;
   }
-  $('repGo').onclick = () => makeReport().catch((e) => { console.error(e); $('repStatus').innerHTML = `<b class="bad">Não foi possível gerar o PDF:</b> ${e.message}`; });
+  $('repGo').onclick = () => makeReport().catch((e) => { console.error(e); $('repStatus').innerHTML = `<b class="bad">Could not create the PDF:</b> ${e.message}`; });
 
-  // ---------------------------------------------------------------- relatório em PDF
-  // jsPDF (MIT, vendor/) só é carregado na hora de gerar. Fontes padrão do PDF (Helvetica): acentos do português ok;
-  // símbolos fora do Latin-1 (≥, →, −) são trocados por equivalentes.
+  // ---------------------------------------------------------------- PDF report
+  // jsPDF (MIT, vendor/) is only loaded when a report is created. Standard PDF fonts (Helvetica) cover Latin-1;
+  // symbols outside it (≥, →, −) are replaced by equivalents.
   function loadJsPDF() {
     if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
     return new Promise((res, rej) => {
       const sc = document.createElement('script'); sc.src = new URL('../vendor/jspdf.umd.min.js', import.meta.url).href;
-      sc.onload = () => res(window.jspdf.jsPDF); sc.onerror = () => rej(new Error('não foi possível carregar vendor/jspdf.umd.min.js')); document.head.appendChild(sc);
+      sc.onload = () => res(window.jspdf.jsPDF); sc.onerror = () => rej(new Error('could not load vendor/jspdf.umd.min.js')); document.head.appendChild(sc);
     });
   }
   const METRIC_DOCS = [
-    ['Viability Score', 'Média aritmética entre a duração de contato com o Sol e a de comunicação com a Terra (%). Resume o sítio num número só.'],
-    ['Contato com o Sol', 'Fração da janela fixada em que o centro do Sol está acima do horizonte real do relevo (LOLA), visto da altura do painel solar.'],
-    ['Horas de Sol na janela', 'O mesmo contato com o Sol, em horas terrestres.'],
-    ['Maior escuridão contínua', 'Maior período seguido sem Sol na janela. É o que a bateria e o controle térmico precisam aguentar.'],
-    ['Períodos com Sol', 'Quantos intervalos contínuos de Sol existem na janela.'],
-    ['Próximo pôr do Sol', 'Tempo, a partir do início da janela, até o Sol se esconder atrás do relevo (ou até nascer, se começa escondido).'],
-    ['Elevação média do Sol', 'Elevação média do centro do Sol acima do plano horizontal, nos instantes em que está visível.'],
-    ['Folga média sobre o relevo', 'Quanto o Sol fica, em média, acima do horizonte do relevo quando visível: a margem contra sombras de cristas e crateras.'],
-    ['Comunicação com a Terra', 'Fração da janela com linha de visada direta para o centro da Terra, vista da altura da antena. Com estações em solo escolhidas, também exige a Lua a 10° ou mais sobre alguma delas.'],
-    ['Horas de comunicação na janela', 'A mesma comunicação, em horas terrestres.'],
-    ['Maior apagão contínuo', 'Maior período seguido sem comunicação direta com a Terra.'],
-    ['Janelas de comunicação', 'Quantos intervalos contínuos de comunicação existem na janela.'],
-    ['Próximo pôr da Terra', 'Tempo, a partir do início da janela, até a Terra sumir atrás do relevo (ou até voltar, se começa sem contato).'],
-    ['Inclinação do relevo', 'Declividade do terreno no ponto, medida no relevo LOLA.'],
-    ['Altitude', 'Altura do terreno em relação à esfera de referência da Lua (raio de 1.737,4 km), segundo o LOLA.'],
-    ['Gráficos', 'Eixo horizontal: datas terrestres (UTC) ao longo da janela. Eixo vertical: elevação em graus. Área cinza: horizonte do relevo no azimute do astro. Linha forte: astro visível; linha clara: astro atrás do relevo.'],
+    ['Viability Score', 'Arithmetic mean of the sunlight duration and the direct-to-Earth duration (%). Sums a site up in a single number.'],
+    ['Sunlight', 'Share of the locked window in which the centre of the Sun is above the real terrain horizon (LOLA), seen from the solar panel height.'],
+    ['Sunlit hours in the window', 'The same sunlight, in Earth hours.'],
+    ['Longest continuous darkness', 'Longest uninterrupted period without sunlight in the window. This is what the batteries and thermal control must survive.'],
+    ['Sunlit periods', 'How many continuous sunlit intervals the window contains.'],
+    ['Next sunset', 'Time from the start of the window until the Sun hides behind the terrain (or until it rises, if it starts hidden).'],
+    ['Mean Sun elevation', 'Mean elevation of the centre of the Sun above the horizontal plane, while it is visible.'],
+    ['Mean clearance over terrain', 'How far, on average, the Sun stays above the terrain horizon while visible: the margin against shadows from ridges and craters.'],
+    ['Direct-to-Earth', 'Share of the window with a direct line of sight to the centre of Earth, seen from the antenna height. With chosen ground stations, it also requires the Moon at 10° or more above one of them.'],
+    ['Contact hours in the window', 'The same direct-to-Earth time, in Earth hours.'],
+    ['Longest continuous blackout', 'Longest uninterrupted period without direct contact with Earth.'],
+    ['Contact windows', 'How many continuous contact intervals the window contains.'],
+    ['Next Earthset', 'Time from the start of the window until Earth disappears behind the terrain (or until contact returns, if it starts without contact).'],
+    ['Terrain slope', 'Steepness of the ground at the point, measured on the LOLA terrain.'],
+    ['Altitude', 'Height of the ground above the lunar reference sphere (radius 1,737.4 km), from LOLA.'],
+    ['Charts', 'Horizontal axis: Earth dates (UTC) across the window. Vertical axis: elevation in degrees. Grey area: terrain horizon at the body azimuth. Solid line: body visible; faint line: body behind the terrain.'],
   ];
+  // logos (assets/) as data URLs for jsPDF
+  const LOGO = { horiz: '../assets/lunite-logo-horizontal-slogan.png', mark: '../assets/lunite-logo-mark.png' };
+  function imgData(rel) {
+    return new Promise((res, rej) => {
+      const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); res({ url: c.toDataURL('image/png'), w: im.naturalWidth, h: im.naturalHeight }); };
+      im.onerror = () => rej(new Error('could not load ' + rel)); im.src = new URL(rel, import.meta.url).href;
+    });
+  }
   async function makeReport() {
-    const st = $('repStatus'); st.textContent = 'Preparando o relatório…'; $('repGo').disabled = true;
+    const st = $('repStatus'); st.textContent = 'Preparing the report…'; $('repGo').disabled = true;
     try {
       const JsPDF = await loadJsPDF();
-      info = an.info(); if (!info) throw new Error('não há janela fixada');
+      info = an.info(); if (!info) throw new Error('there is no locked window');
       const P = info.P, Fl = info.filt, Wd = window.lunite.window || {};
       const sites = [];
-      for (const [i, c] of report.entries()) { st.textContent = `Calculando a série do sítio ${i + 1} de ${report.length}…`; const p = an.point(c); sites.push({ c, p, d: metricsOf(p, await an.detail(c)) }); }
-      st.textContent = 'Montando o PDF…';
+      for (const [i, c] of report.entries()) { st.textContent = `Computing the series of site ${i + 1} of ${report.length}…`; const p = an.point(c); sites.push({ c, p, d: metricsOf(p, await an.detail(c)) }); }
+      st.textContent = 'Building the PDF…';
+      const [logoH, logoM] = await Promise.all([imgData(LOGO.horiz), imgData(LOGO.mark)]);
       const T = (v) => String(v).replace(/≥/g, '>=').replace(/≤/g, '<=').replace(/→/g, '->').replace(/−/g, '-').replace(/…/g, '...').replace(/×/g, 'x').replace(/[⠿▲▼]/g, '');
       const doc = new JsPDF({ unit: 'mm', format: 'a4' }), PW = 210, PH = 297, M = 16, CW = PW - 2 * M;
       let y = M;
@@ -375,7 +386,7 @@ export function initInspect(api) {
       const h2 = (t, rgb = [20, 24, 30]) => { need(12); font(12.5, 'bold', rgb); doc.text(T(t), M, y + 5); doc.setDrawColor(200); doc.line(M, y + 7, PW - M, y + 7); y += 11; };
       const h3 = (t, rgb = [60, 66, 76]) => { need(8); font(9.5, 'bold', rgb); doc.text(T(t).toUpperCase(), M, y + 4); y += 6.5; };
       const para = (t, size = 9.5, rgb = [50, 56, 66], style = 'normal') => { font(size, style, rgb); const lines = doc.splitTextToSize(T(t), CW); for (const l of lines) { need(size * 0.45); doc.text(l, M, y + size * 0.35); y += size * 0.45; } y += 1.5; };
-      const kv = (rows) => {   // tabela de duas colunas: rótulo | valor
+      const kv = (rows) => {   // two-column table: label | value
         for (const [k, v] of rows) {
           font(9.5, 'normal', [70, 76, 86]); const lk = doc.splitTextToSize(T(k), CW * 0.55); font(9.5, 'bold', [20, 24, 30]); const lv = doc.splitTextToSize(T(v), CW * 0.43);
           const h = Math.max(lk.length, lv.length) * 4.4 + 1.6; need(h);
@@ -398,66 +409,75 @@ export function initInspect(api) {
         drawChart(cv, d, body, { W: w, H: h, dpr: 3, theme: LIGHT });
         const hh = CW * h / w; need(hh + 2); doc.addImage(cv.toDataURL('image/png'), 'PNG', M, y, CW, hh); y += hh + 2;
       };
-      const ivalsTxt = (runs, d) => runs.length ? runs.slice(0, 24).map(([a, b]) => `${fmtWhen(d.t0 + a * d.h * 3600e3)} -> ${fmtWhen(d.t0 + b * d.h * 3600e3)} (${fmtDur((b - a) * d.h)})`).join('   ') + (runs.length > 24 ? `   + ${runs.length - 24} períodos` : '') : 'nenhum período na janela';
+      const ivalsTxt = (runs, d) => runs.length ? runs.slice(0, 24).map(([a, b]) => `${fmtWhen(d.t0 + a * d.h * 3600e3)} -> ${fmtWhen(d.t0 + b * d.h * 3600e3)} (${fmtDur((b - a) * d.h)})`).join('   ') + (runs.length > 24 ? `   + ${runs.length - 24} more` : '') : 'no period in this window';
       const now = new Date(), d2 = (n) => String(n).padStart(2, '0');
-      const fmtDateUTC = (iso) => { const t = new Date(iso); return `${d2(t.getUTCDate())}/${d2(t.getUTCMonth() + 1)}/${t.getUTCFullYear()}`; };
-      const localName = P.site.mode === 'preset' ? P.site.name : 'Ponto personalizado';
+      const fmtDateUTC = (iso) => { const t = new Date(iso); return `${t.getUTCDate()} ${MON[t.getUTCMonth()]} ${t.getUTCFullYear()}`; };
+      const localName = P.site.mode === 'preset' ? P.site.name : 'Custom point';
       const station = (k) => (document.querySelector(`.mf-stations input[value="${k}"]`)?.nextElementSibling?.textContent || k);
 
-      // ---- capa
-      h1('Lunite · Relatório de sítios de pouso');
-      para(`Gerado em ${d2(now.getDate())}/${d2(now.getMonth() + 1)}/${now.getFullYear()} às ${d2(now.getHours())}:${d2(now.getMinutes())} (horário local).`, 9.5, [90, 96, 106]);
+      // ---- cover
+      // dark band with the logo (the logo text is light, made for dark backgrounds)
+      doc.setFillColor(8, 10, 16); doc.rect(0, 0, PW, 44, 'F');
+      const lw = 86, lh = lw * logoH.h / logoH.w; doc.addImage(logoH.url, 'PNG', M, (44 - lh) / 2, lw, lh);
+      font(9, 'normal', [170, 178, 192]); doc.text('NASA Space Apps Challenge', PW - M, 20, { align: 'right' }); doc.text('Lunar Landing Site Navigator', PW - M, 25, { align: 'right' });
+      y = 54;
+      h1('Landing site report');
+      para(`Generated on ${now.getDate()} ${MON[now.getMonth()]} ${now.getFullYear()} at ${d2(now.getHours())}:${d2(now.getMinutes())} (local time).`, 9.5, [90, 96, 106]);
       kv([
-        ['Área analisada', `${localName} · ${fmtLL(P.site)}`], ['Raio da área de busca', `${fmtNum(P.radiusKm)} km`],
-        ['Janela de tempo fixada (UTC)', `${fmtDateUTC(Wd.start)} - ${fmtDateUTC(Wd.end)}${Wd.offsetDays ? ` (${Wd.offsetDays} dias após o início pedido)` : ''}`],
-        ['Sítios neste relatório', String(sites.length)],
-        ['Dados', 'Relevo: NASA LOLA (PDS). Sol e Terra: JPL Horizons (DE441). Passo da simulação: ' + info.stepH + ' h.'],
+        ['Analysed area', `${localName} · ${fmtLL(P.site)}`], ['Search radius', `${fmtNum(P.radiusKm)} km`],
+        ['Locked time window (UTC)', `${fmtDateUTC(Wd.start)} - ${fmtDateUTC(Wd.end)}${Wd.offsetDays ? ` (${Wd.offsetDays} days after the requested start)` : ''}`],
+        ['Sites in this report', String(sites.length)],
+        ['Data', 'Terrain: NASA LOLA (PDS). Sun and Earth: JPL Horizons (DE441). Simulation step: ' + info.stepH + ' h.'],
       ]);
 
       // ---- inputs
-      h2('INPUTS · parâmetros da missão');
-      h3('Sonda'); kv([['Precisão de pouso', `${P.probe.precisionM} m`], ['Inclinação máxima do relevo', `${P.probe.slopeMaxDeg}°`], ['Altura da antena', `${fmtNum(P.probe.antennaM)} m`], ['Altura do painel', `${fmtNum(P.probe.panelM)} m`]]);
-      h3('Local de pouso'); kv([['Local', `${localName} (${fmtLL(P.site)})`], ['Raio da área de busca', `${fmtNum(P.radiusKm)} km`]]);
-      h3('Terra e comunicação'); kv([
-        ['Comunicação com', P.earth.mode === 'stations' ? 'Centros de comunicação escolhidos' : 'Somente o centro da Terra (simplificado)'],
-        ...(P.earth.mode === 'stations' ? [['Centros de comunicação', P.earth.stations.map(station).join('; ')]] : []),
-        ['Maior apagão contínuo tolerado', `${P.earth.maxBlackoutH} h`], ['Duração mínima de comunicação direta', `${P.earth.minCommPct}%`]]);
-      h3('Sol e energia'); kv([['Duração mínima de contato com o Sol', `${P.sun.minSunPct}%`], ['Maior escuridão contínua tolerada', `${P.sun.maxDarkH} h`]]);
-      h3('Tempo e duração'); kv([['Data de início', fmtDateUTC(P.time.startDate + 'T00:00:00Z')], ['Duração da missão', `${P.time.days} dias`], ['Intervalo máximo de atraso', `${P.time.maxDelayDays} dias`]]);
-      h3('Filtragem'); kv([['Duração mínima de contato com o Sol', `${Fl.sun}%`], ['Duração mínima de comunicação com a Terra', `${Fl.comm}%`]]);
+      h2('INPUTS · mission parameters');
+      h3('Lander'); kv([['Landing accuracy', `${P.probe.precisionM} m`], ['Maximum terrain slope', `${P.probe.slopeMaxDeg}°`], ['Antenna height', `${fmtNum(P.probe.antennaM)} m`], ['Solar panel height', `${fmtNum(P.probe.panelM)} m`]]);
+      h3('Landing site'); kv([['Site', `${localName} (${fmtLL(P.site)})`], ['Search radius', `${fmtNum(P.radiusKm)} km`]]);
+      h3('Earth & communication'); kv([
+        ['Communicate with', P.earth.mode === 'stations' ? 'Chosen ground stations' : 'Earth centre only (simplified)'],
+        ...(P.earth.mode === 'stations' ? [['Ground stations', P.earth.stations.map(station).join('; ')]] : []),
+        ['Longest tolerated blackout', `${P.earth.maxBlackoutH} h`], ['Minimum direct-to-Earth time', `${P.earth.minCommPct}%`]]);
+      h3('Sun & power'); kv([['Minimum sunlight time', `${P.sun.minSunPct}%`], ['Longest tolerated darkness', `${P.sun.maxDarkH} h`]]);
+      h3('Time & duration'); kv([['Start date', fmtDateUTC(P.time.startDate + 'T00:00:00Z')], ['Mission duration', `${P.time.days} days`], ['Maximum launch delay', `${P.time.maxDelayDays} days`]]);
+      h3('Filtering'); kv([['Minimum sunlight duration', `${Fl.sun}%`], ['Minimum direct-to-Earth duration', `${Fl.comm}%`]]);
 
-      // ---- métricas
-      h2('MÉTRICAS · o que cada número significa');
+      // ---- metrics
+      h2('METRICS · what each number means');
       for (const [k, v] of METRIC_DOCS) { need(10); font(9.5, 'bold'); doc.text(T(k), M, y + 3.5); y += 4.6; para(v, 9, [70, 76, 86]); }
 
-      // ---- resumo
-      h2('RESUMO DOS SÍTIOS');
-      table(['#', 'Coordenadas', 'Score', 'Sol', 'Escuridão', 'Terra', 'Apagão', 'Incl.'],
+      // ---- summary
+      h2('SITE SUMMARY');
+      table(['#', 'Coordinates', 'Score', 'Sun', 'Darkness', 'Earth', 'Blackout', 'Slope'],
         sites.map(({ p }, i) => [String(i + 1), fmtLL(p), fmtPct(score(p)), fmtPct(p.sunPct), fmtDur(p.maxDarkH), fmtPct(p.commPct), fmtDur(p.maxBlackoutH), fmtNum(p.slope) + '°']),
         [8, 52, 20, 20, 22, 20, 22, 14]);
 
-      // ---- um sítio por página
+      // ---- one site per page
       const rowsOf = (key, p, d) => ROWS[key].map(([label, get, , fmt, , alt]) => { const a = alt && alt(p, d), v = get(p, d); return [label, a || (v == null || (typeof v === 'number' && !isFinite(v)) ? '-' : fmt(v))]; });
       sites.forEach(({ p, d }, i) => {
         doc.addPage(); y = M;
-        h2(`SÍTIO ${i + 1}`, [14, 122, 52]);
-        para(`Coordenadas: ${fmtLL(p)}  ·  ${fmtNum(p.dist / 1000, 2)} km do centro da área`, 10.5, [20, 24, 30], 'bold');
+        h2(`SITE ${i + 1}`, [14, 122, 52]);
+        para(`Coordinates: ${fmtLL(p)}  ·  ${fmtNum(p.dist / 1000, 2)} km from the area centre`, 10.5, [20, 24, 30], 'bold');
         kv([['Viability Score', fmtPct(score(p))]]);
-        h3('Sol e energia', [168, 110, 0]); kv(rowsOf('sun', p, d)); chart(d, 'sun'); para('Períodos com Sol (UTC): ' + ivalsTxt(d.sRuns, d), 8, [90, 96, 106]);
-        h3('Terra e comunicação', [24, 80, 180]); kv(rowsOf('earth', p, d)); chart(d, 'earth'); para('Janelas de comunicação (UTC): ' + ivalsTxt(d.cRuns, d), 8, [90, 96, 106]);
-        h3('Terreno'); kv(rowsOf('ter', p, d));
+        h3('Sun & power', [168, 110, 0]); kv(rowsOf('sun', p, d)); chart(d, 'sun'); para('Sunlit periods (UTC): ' + ivalsTxt(d.sRuns, d), 8, [90, 96, 106]);
+        h3('Earth & communication', [24, 80, 180]); kv(rowsOf('earth', p, d)); chart(d, 'earth'); para('Contact windows (UTC): ' + ivalsTxt(d.cRuns, d), 8, [90, 96, 106]);
+        h3('Terrain'); kv(rowsOf('ter', p, d));
       });
 
-      // ---- rodapé em todas as páginas
+      // ---- footer on every page
       const n = doc.getNumberOfPages();
-      for (let k = 1; k <= n; k++) { doc.setPage(k); font(7.5, 'normal', [140, 146, 156]); doc.text(T(`Lunite · NASA Space Apps · ${localName} · página ${k} de ${n}`), PW / 2, PH - 8, { align: 'center' }); }
-      const name = `lunite-relatorio-${now.getFullYear()}${d2(now.getMonth() + 1)}${d2(now.getDate())}-${d2(now.getHours())}${d2(now.getMinutes())}.pdf`;
+      for (let k = 1; k <= n; k++) {
+        doc.setPage(k); font(7.5, 'normal', [140, 146, 156]);
+        doc.text(T(`Lunite · Your search for landing sites, made easier · ${localName} · page ${k} of ${n}`), PW / 2, PH - 8, { align: 'center' });
+        if (k > 1) { const mh = 9, mw = mh * logoM.w / logoM.h; doc.addImage(logoM.url, 'PNG', PW - M - mw, 6, mw, mh); }   // logo mark in the corner of the inner pages
+      }
+      const name = `lunite-report-${now.getFullYear()}${d2(now.getMonth() + 1)}${d2(now.getDate())}-${d2(now.getHours())}${d2(now.getMinutes())}.pdf`;
       doc.save(name);
-      st.innerHTML = `PDF gerado: <b>${name}</b> (${n} páginas).`;
+      st.innerHTML = `PDF created: <b>${name}</b> (${n} pages).`;
     } finally { $('repGo').disabled = !report.length; }
   }
 
-  // ---------------------------------------------------------------- ciclo: chip preso à barra, cursor do tempo nos gráficos
+  // ---------------------------------------------------------------- loop: chip attached to the bar, time cursor on the charts
   function tick() {
     placeChip();
     for (const X of [fixed, cmp]) if (X && X.win && X.win.closed) { X.win = null; render(); }
