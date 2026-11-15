@@ -6,7 +6,7 @@ import { Ephem, validate } from './ephem.js';
 import { earthFrame, earthshine, GLSL_COMMON, EARTH_VERT, EARTH_FRAG, sunDiscCanvas } from './sky.js?v=20261115d';
 import { initMission } from './mission.js?v=20261115d';
 import { initAnalysis } from './analysis.js?v=20261115d';
-// versão dos arquivos JS: o index.html confere, e o ?v= nos imports evita que o navegador use arquivos antigos do cache
+// versão dos arquivos JS: o app.html confere, e o ?v= nos imports evita que o navegador use arquivos antigos do cache
 window.LUNITE_BUILD = '20261115d';
 
 const BASE = 'data/';

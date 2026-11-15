@@ -1,6 +1,6 @@
 # Last Light: data pack and data viewer
 
-This is a static site (GitHub Pages, no server). `index.html` is a **data viewer**. It exists to check that the data pack is correct and to see how it looks. It is not the final product.
+This is a static site (GitHub Pages, no server). `index.html` is the landing page, `about.html` the about page, and `app.html` is a **data viewer**. It exists to check that the data pack is correct and to see how it looks. It is not the final product.
 
 ## What is in `data/`
 
