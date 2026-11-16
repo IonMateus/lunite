@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Last Light Data Viewer</title>
-<meta name="description" content="Checks the Last Light data pack: LOLA terrain that refines as you zoom, Sun and Earth from JPL Horizons, the 20 curated landing sites.">
+<title>Lunite · Tool</title>
+<link rel="icon" type="image/png" href="assets/lunite-logo-mark.png">
+<meta name="description" content="Lunite: find and compare lunar landing sites by sunlight and direct-to-Earth visibility, with real NASA LOLA terrain and JPL Horizons ephemerides.">
 <style>
 :root{
   --bg:#000; --panel:rgba(10,12,16,.82); --line:rgba(255,255,255,.10); --text:#e8ecf1; --dim:#8b95a3; --accent:#7fd4ff; --past:#ffc36b; --future:#8affc1; --err:#ff7b7b;
@@ -60,7 +61,18 @@ label.tog{display:flex;align-items:center;gap:4px;font-size:12px}
 #status.busy{color:var(--accent)} #status.err{color:var(--err)}
 .local-only{display:none} body.local .local-only{display:inline-flex}
 #panelToggle{display:none}
-/* ---- painel de parâmetros da missão (js/mission.js) ---- */
+/* brand: logo in the header and the opening screen */
+header h1.brand{margin:0;line-height:0} header h1.brand img{display:block;height:28px;width:auto}
+#splash{position:fixed;inset:0;z-index:30;background:#000;display:grid;place-items:center;transition:opacity .7s ease}
+#splash.gone{opacity:0;pointer-events:none}
+#splash .sp-in{display:grid;gap:18px;justify-items:center}
+#splash img{width:242px;height:auto}
+.sp-bar{width:200px;height:2px;background:rgba(255,255,255,.12);overflow:hidden} .sp-bar i{display:block;height:100%;width:35%;background:#ffb347;animation:sp 1.2s ease-in-out infinite}
+@keyframes sp{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
+.sp-msg{font:11px var(--mono);color:var(--dim);max-width:420px;text-align:center}
+.sp-msg.err{color:var(--err)}
+@media (prefers-reduced-motion:reduce){.sp-bar i{animation:none;width:100%}}
+/* ---- mission parameters panel (js/mission.js) ---- */
 [hidden]{display:none !important}
 #left{width:310px;padding:8px 10px}
 #left.min{width:auto} #left.min > :not(.mf-head){display:none !important}
@@ -96,11 +108,15 @@ label.tog{display:flex;align-items:center;gap:4px;font-size:12px}
 .mf-err{color:var(--err);font-size:11px}
 #left #siteCard{margin:2px 0 4px;padding:6px 0 4px 9px;border-top:0;border-left:1px solid var(--line);font-size:11.5px}
 #left #siteCard h3{font-size:12px}
-body.picking #view{cursor:crosshair}
+/* cursor: astronaut (the glove tip is the click point); with a blue ring when a click marks the target on the Moon */
+:root{--cur-astro:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M3.5 3.5L11 10' stroke='%230b0e14' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M3.5 3.5L11 10' stroke='%23f2f4f8' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='17' y='12.5' width='10.5' height='12.5' rx='3' fill='%239aa3b2' stroke='%230b0e14' stroke-width='1.2'/%3E%3Crect x='12.5' y='25' width='4' height='5.5' rx='1.6' fill='%23f2f4f8' stroke='%230b0e14' stroke-width='1.1'/%3E%3Crect x='18.5' y='25' width='4' height='5.5' rx='1.6' fill='%23f2f4f8' stroke='%230b0e14' stroke-width='1.1'/%3E%3Crect x='11.5' y='15' width='12.5' height='12' rx='4.2' fill='%23f2f4f8' stroke='%230b0e14' stroke-width='1.2'/%3E%3Cpath d='M22.5 18.5l3 3.5' stroke='%230b0e14' stroke-width='4.4' stroke-linecap='round'/%3E%3Cpath d='M22.5 18.5l3 3.5' stroke='%23f2f4f8' stroke-width='2.6' stroke-linecap='round'/%3E%3Crect x='14.5' y='18.5' width='6' height='3' rx='1' fill='%23ffb347'/%3E%3Ccircle cx='15.6' cy='20' r='.7' fill='%230b0e14'/%3E%3Ccircle cx='17.5' cy='9.5' r='7' fill='%23f2f4f8' stroke='%230b0e14' stroke-width='1.2'/%3E%3Crect x='12.8' y='6.3' width='9.4' height='6.4' rx='3.2' fill='%2322406e' stroke='%230b0e14' stroke-width='1'/%3E%3Cpath d='M14.3 8.3q2-1.3 4.2-.2' stroke='%239fd3ff' stroke-width='1.1' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='3.5' cy='3.5' r='2.2' fill='%23f2f4f8' stroke='%230b0e14' stroke-width='1.1'/%3E%3C/svg%3E") 3 3, auto;--cur-astro-pick:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M3.5 3.5L11 10' stroke='%230b0e14' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M3.5 3.5L11 10' stroke='%23f2f4f8' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='17' y='12.5' width='10.5' height='12.5' rx='3' fill='%239aa3b2' stroke='%230b0e14' stroke-width='1.2'/%3E%3Crect x='12.5' y='25' width='4' height='5.5' rx='1.6' fill='%23f2f4f8' stroke='%230b0e14' stroke-width='1.1'/%3E%3Crect x='18.5' y='25' width='4' height='5.5' rx='1.6' fill='%23f2f4f8' stroke='%230b0e14' stroke-width='1.1'/%3E%3Crect x='11.5' y='15' width='12.5' height='12' rx='4.2' fill='%23f2f4f8' stroke='%230b0e14' stroke-width='1.2'/%3E%3Cpath d='M22.5 18.5l3 3.5' stroke='%230b0e14' stroke-width='4.4' stroke-linecap='round'/%3E%3Cpath d='M22.5 18.5l3 3.5' stroke='%23f2f4f8' stroke-width='2.6' stroke-linecap='round'/%3E%3Crect x='14.5' y='18.5' width='6' height='3' rx='1' fill='%23ffb347'/%3E%3Ccircle cx='15.6' cy='20' r='.7' fill='%230b0e14'/%3E%3Ccircle cx='17.5' cy='9.5' r='7' fill='%23f2f4f8' stroke='%230b0e14' stroke-width='1.2'/%3E%3Crect x='12.8' y='6.3' width='9.4' height='6.4' rx='3.2' fill='%2322406e' stroke='%230b0e14' stroke-width='1'/%3E%3Cpath d='M14.3 8.3q2-1.3 4.2-.2' stroke='%239fd3ff' stroke-width='1.1' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='3.5' cy='3.5' r='2.2' fill='%23f2f4f8' stroke='%230b0e14' stroke-width='1.1'/%3E%3Ccircle cx='3.5' cy='3.5' r='3.2' fill='none' stroke='%237fd4ff' stroke-width='1.3'/%3E%3C/svg%3E") 3 3, crosshair}
+html,body,#view,button,select,a,label,summary,.srow,.pin,input[type=range],input[type=checkbox]{cursor:var(--cur-astro)}
+body.picking #view{cursor:var(--cur-astro-pick)}
+input[type=number],input[type=text],input[type=date],input[type=datetime-local]{cursor:text}
 #reticle{position:fixed;left:0;top:0;z-index:4;pointer-events:none;font:500 11px/1.35 var(--mono);color:var(--text);padding:2px 6px 2px 10px;background:rgba(0,0,0,.55);border-radius:0 3px 3px 0;border-left:1px solid var(--text);white-space:pre;text-shadow:0 0 6px #000;will-change:transform}
 #reticle small{display:block;color:#aab4c2;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
-/* ---- sítios válidos (js/analysis.js) ---- */
-/* painel da direita: dados do visualizador ao preencher os parâmetros; sítios válidos só ao analisar um alvo no terreno */
+/* ---- valid sites (js/analysis.js) ---- */
+/* right panel: viewer data while filling in the parameters; valid sites only while analysing a target on the terrain */
 #anPanel{display:none}
 body.analyzing.local #anPanel{display:block}
 body.analyzing.local #right > :not(#anPanel){display:none !important}
@@ -136,7 +152,7 @@ body.analyzing.local #right > :not(#anPanel){display:none !important}
 .an-loosen{margin:6px 0;padding-left:16px;display:grid;gap:4px;color:var(--text)}
 .mf-row.mf-warn{box-shadow:inset 2px 0 0 var(--err);padding-left:6px;background:rgba(255,123,123,.06)}
 .mf-row.mf-warn label{color:var(--err)}
-/* setas do Sol e da Terra (clique foca a câmera) */
+/* Sun and Earth arrows (click points the camera) */
 .body-arrow{position:fixed;left:0;top:0;z-index:4;display:flex;align-items:center;gap:6px;padding:5px 8px 5px 6px;background:rgba(6,8,12,.72);border:1px solid currentColor;border-radius:14px;font:600 11px var(--sans);letter-spacing:.04em;cursor:pointer;will-change:transform;white-space:nowrap}
 .body-arrow svg{width:15px;height:15px;flex:none}
 .body-arrow small{display:block;font:400 10px var(--mono);letter-spacing:0;opacity:.8}
@@ -145,6 +161,77 @@ body.analyzing.local #right > :not(#anPanel){display:none !important}
 .body-arrow:hover{background:rgba(20,24,32,.9)}
 .body-arrow.onscreen svg{display:none}
 .body-arrow.below{opacity:.6}
+/* ---- filtering ---- */
+.an-filter{margin:10px 0 4px;padding:8px;border:1px solid var(--line);border-radius:5px;background:rgba(255,255,255,.03)}
+.an-filter h3{margin:0 0 6px;font:600 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--text)}
+.an-frow{display:grid;gap:2px;margin-bottom:6px;font-size:11.5px;color:var(--dim)}
+.an-frow > div{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.an-frow b{font:500 11px var(--mono);color:var(--text);min-width:92px;text-align:right}
+.an-frow.sun input{accent-color:#e8a200} .an-frow.earth input{accent-color:#2f6fe0}
+.an-frow.warn label{color:var(--err)} .an-frow.warn b{color:var(--err)}
+.an-status .bad{color:var(--err)}
+.an-fr.filter i b{background:#7fd4ff}
+/* ---- selection, cards and table ---- */
+.sel-chip{position:fixed;left:0;top:0;z-index:6;display:grid;gap:5px;padding:7px 8px;background:rgba(6,8,12,.92);border:1px solid rgba(255,255,255,.35);border-radius:6px;font-size:11.5px;will-change:transform;max-width:260px}
+.sc-info{font:11px var(--mono);line-height:1.4}
+.sc-act{display:flex;gap:5px;align-items:center}
+.sc-act .b{min-height:26px;padding:3px 10px;font-weight:600}
+.sc-act .b:disabled{opacity:.4}
+.sc-x{margin-left:auto;background:none;border:0;color:var(--dim);font-size:17px;line-height:1;padding:0 2px}
+.sc-x:hover{color:var(--text)}
+.sc-why{font-size:10.5px}
+.site-card{top:46px;width:340px;max-height:calc(100% - 186px);overflow:auto;padding:10px 12px;z-index:5}
+.site-card.fixed{left:330px;border-color:rgba(127,212,255,.55)} .site-card.cmp{left:676px;border-color:rgba(255,138,216,.55)}
+.site-card header,.cmp-box header{position:static;pointer-events:auto;padding:0}   /* the page-top 'header' rule does not apply here */
+header.drag{cursor:move;touch-action:none} header.drag *{cursor:var(--cur-astro)}
+.site-card.dragging,.cmp-box.dragging{opacity:.92;box-shadow:0 8px 30px rgba(0,0,0,.6);user-select:none}
+.c-tools{display:flex;gap:4px;margin-left:auto}
+.c-tools .b{min-height:22px;padding:1px 7px;font-size:11px}
+.c-grip{display:inline-flex;align-items:center;gap:4px;border:1px dashed rgba(95,213,133,.6);color:#5fd585;border-radius:4px;padding:1px 6px;font-size:10.5px;cursor:grab}
+.popout-note{color:var(--dim);font-size:12px;padding:6px 0}
+/* report tray */
+.rep-tray{margin:10px 0 4px;padding:8px;border:1px dashed rgba(95,213,133,.5);border-radius:5px;background:rgba(95,213,133,.04)}
+.rep-tray.over{background:rgba(95,213,133,.14);border-style:solid}
+.rep-tray h3{margin:0 0 6px;font:600 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:#5fd585}
+.rep-list{display:grid;gap:3px;margin-bottom:6px}
+.rep-item{display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;align-items:center;font:11px var(--mono);padding:3px 4px;border:1px solid var(--line);border-radius:4px}
+.rep-item b{color:#5fd585}
+.rep-hint{font-size:10.5px;margin-bottom:6px}
+.rep-go{width:100%;font-weight:600}
+.rep-go:not(:disabled){background:#5fd585 !important;color:#06120a !important;border-color:#5fd585 !important}
+.rep-go:disabled{opacity:.45}
+#cmpTable tr[draggable]{cursor:grab}
+.site-card header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.site-card header .lbl{font:600 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase}
+.site-card.fixed header .lbl{color:#7fd4ff} .site-card.cmp header .lbl{color:#ff8ad8}
+.c-coord{font:12px var(--mono);margin-bottom:6px}
+.c-score{display:flex;align-items:baseline;gap:8px;margin:4px 0 8px;font-size:12px;color:var(--dim)}
+.c-score b{font:500 22px var(--mono);color:#5fd585}
+.c-sec{margin:8px 0 4px;font:600 10px var(--sans);letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.c-sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.c-sec.sun{color:#ffc84a} .c-sec.earth{color:#7fb6ff} .c-sec.ter{color:var(--dim)}
+.c-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:11.5px;padding:2px 0;color:var(--dim)}
+.c-row span:last-child{font:500 11.5px var(--mono);color:var(--text);text-align:right}
+.c-row i{font-style:normal;margin-left:6px;font-size:11px}
+.d-good{color:#5fd585} .d-bad{color:#ff7b7b} .d-eq{color:var(--dim)}
+.c-chart{display:block;width:100%;height:118px;margin:4px 0 2px;border:1px solid var(--line);border-radius:3px;background:rgba(0,0,0,.25)}
+.c-legend{display:flex;gap:10px;font-size:10px;color:var(--dim);flex-wrap:wrap}
+.c-legend i{display:inline-block;width:10px;height:3px;vertical-align:middle;margin-right:4px}
+.c-ivals{font:10.5px var(--mono);color:var(--dim);line-height:1.5;margin-top:2px}
+.c-loading{color:var(--dim);font-size:12px;padding:10px 0}
+.cmp-box{left:50%;top:120px;transform:translateX(-50%);z-index:8;width:min(980px,calc(100% - 40px));max-height:calc(100% - 200px);display:flex;flex-direction:column;padding:10px 12px}
+.cmp-box[style*="left"]{transform:none}   /* once dragged, the position is absolute */
+.cmp-box:not([hidden]){display:flex}
+.cmp-box header{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+.cmp-box header h2{margin:0;color:var(--text)}
+.cmp-scroll{overflow:auto}
+#cmpTable{font:11.5px var(--mono)}
+#cmpTable th{cursor:var(--cur-astro);user-select:none;white-space:nowrap;padding:5px 6px;color:var(--dim);position:sticky;top:0;background:#0d1015}
+#cmpTable th[aria-sort]{color:var(--text)}
+#cmpTable th[aria-sort="ascending"]::after{content:" ▲"} #cmpTable th[aria-sort="descending"]::after{content:" ▼"}
+#cmpTable td{padding:5px 6px;white-space:nowrap}
+#cmpTable tr.sel td{background:rgba(255,255,255,.07)}
+#cmpTable td.best{color:#5fd585}
 #anTip{position:fixed;left:0;top:0;z-index:5;pointer-events:none;display:grid;gap:2px;background:rgba(6,8,12,.9);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font:11px var(--mono);will-change:transform}
 #anTip .sun{color:#ffc84a} #anTip .earth{color:#7fb6ff} #anTip .score{color:#5fd585}
 @media (max-width:760px){
@@ -160,38 +247,63 @@ body.analyzing.local #right > :not(#anPanel){display:none !important}
 </style>
 </head>
 <body>
+<div id="splash" role="status"><div class="sp-in"><img src="assets/lunite-logo-vertical-slogan.png" alt="Lunite · Your search for landing sites, made easier" width="242" height="222"><div class="sp-bar"><i></i></div><div class="sp-msg" id="spMsg">Loading…</div></div></div>
 <canvas id="view"></canvas>
 <div id="labels"></div>
 <header>
-  <h1><a href="index.html" style="color:inherit;text-decoration:none;pointer-events:auto">Lunite</a> · data viewer</h1><span class="chip" id="mode">Globe</span>
+  <h1 class="brand"><a href="index.html" style="pointer-events:auto;display:inline-flex"><img src="assets/lunite-logo-horizontal.png" alt="Lunite" width="98" height="31"></a></h1><span class="chip" id="mode">Globe</span>
   <button class="b" id="panelToggle">Panels</button>
 </header>
 
-<aside id="left" class="panel" aria-label="Parâmetros da missão">
-  <button class="b mf-home" id="btnHome" type="button" hidden>‹ Voltar ao início</button>
-  <div class="mf-head"><h2>Parâmetros da missão</h2><button type="button" class="mf-min" id="mfMin" aria-label="Encolher painel" aria-expanded="true"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6h8" stroke="currentColor" fill="none"/></svg></button></div>
-  <form id="mfBody" onsubmit="return false"><div class="dim">Carregando dados da Lua…</div></form>
+<aside id="left" class="panel" aria-label="Mission parameters">
+  <button class="b mf-home" id="btnHome" type="button" hidden>‹ Back to start</button>
+  <div class="mf-head"><h2>Mission parameters</h2><button type="button" class="mf-min" id="mfMin" aria-label="Collapse panel" aria-expanded="true"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6h8" stroke="currentColor" fill="none"/></svg></button></div>
+  <form id="mfBody" onsubmit="return false"><div class="dim">Loading Moon data…</div></form>
   <div id="siteCard" hidden></div>
   <div id="siteList" hidden></div>
 </aside>
 <div id="reticle" hidden></div>
-<button type="button" class="body-arrow sun" id="arrSun" hidden aria-label="Focar a câmera no Sol"><svg viewBox="0 0 16 16"><path d="M3 8h9M8 3.5 12.5 8 8 12.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><span>Sol<small></small></span></button>
-<button type="button" class="body-arrow earth" id="arrEarth" hidden aria-label="Focar a câmera na Terra"><svg viewBox="0 0 16 16"><path d="M3 8h9M8 3.5 12.5 8 8 12.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><span>Terra<small></small></span></button>
+<button type="button" class="body-arrow sun" id="arrSun" hidden aria-label="Point the camera at the Sun"><svg viewBox="0 0 16 16"><path d="M3 8h9M8 3.5 12.5 8 8 12.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><span>Sun<small></small></span></button>
+<button type="button" class="body-arrow earth" id="arrEarth" hidden aria-label="Point the camera at Earth"><svg viewBox="0 0 16 16"><path d="M3 8h9M8 3.5 12.5 8 8 12.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg><span>Earth<small></small></span></button>
 <div id="anTip" hidden></div>
+<div id="selChip" class="sel-chip" hidden>
+  <div class="sc-info" id="scInfo"></div>
+  <div class="sc-act"><button type="button" class="b" id="scFix">Pin</button><button type="button" class="b" id="scCmp">Compare</button><button type="button" class="b" id="scRep" title="Add to the report (shortcut: Alt+click the bar)">+ Report</button><button type="button" class="sc-x" id="scX" aria-label="Deselect">×</button></div>
+  <div class="sc-why dim" id="scWhy"></div>
+</div>
+<aside id="cardFixed" class="panel site-card fixed" hidden aria-live="polite"></aside>
+<aside id="cardCmp" class="panel site-card cmp" hidden aria-live="polite"></aside>
+<div id="cmpWin" class="panel cmp-box" hidden role="dialog" aria-labelledby="cmpTitle">
+  <header class="drag"><h2 id="cmpTitle">Site comparison</h2><span class="dim" id="cmpHint">Drag the title to move · click a column to sort · drag a row onto "Report" · to compare side by side, close this window and pin a site.</span><button type="button" class="sc-x" id="cmpClose" aria-label="Close">×</button></header>
+  <div class="cmp-scroll"><table id="cmpTable"></table></div>
+</div>
 
 <aside id="right" class="panel">
   <section id="anPanel" aria-live="polite">
-    <h2>Sítios válidos</h2>
-    <div class="an-win idle" id="anWin"><span id="anWinLbl">Janela</span><b id="anWinDates">–</b></div>
-    <div class="an-seg" id="anSeg" role="radiogroup" aria-label="Métrica das barras">
-      <button type="button" role="radio" data-m="sun" class="sun" aria-checked="true">Duração de contato com o Sol</button>
-      <button type="button" role="radio" data-m="earth" class="earth" aria-checked="false">Duração de comunicação com a Terra</button>
-      <button type="button" role="radio" data-m="score" class="score" aria-checked="false">Viability Score <span class="dim">(média Sol + Terra)</span></button>
+    <h2>Valid sites</h2>
+    <div class="an-win idle" id="anWin"><span id="anWinLbl">Window</span><b id="anWinDates">–</b></div>
+    <div class="an-seg" id="anSeg" role="radiogroup" aria-label="Bar metric">
+      <button type="button" role="radio" data-m="sun" class="sun" aria-checked="true">Sunlight duration</button>
+      <button type="button" role="radio" data-m="earth" class="earth" aria-checked="false">Direct-to-Earth duration</button>
+      <button type="button" role="radio" data-m="score" class="score" aria-checked="false">Viability Score <span class="dim">(mean of Sun + Earth)</span></button>
     </div>
     <div class="an-legend"><span id="anMin">–</span><i id="anGrad"></i><span id="anMax">–</span></div>
-    <div id="anChartWrap" class="an-chart" hidden><canvas id="anChart" aria-label="Sítios válidos em cada janela de tempo"></canvas><div class="an-axis"><span id="anChartA"></span><span>válidos por janela</span><span id="anChartB"></span></div></div>
-    <div class="an-status" id="anStatus">Escolha um local de pouso nos parâmetros da missão.</div>
+    <div id="anChartWrap" class="an-chart" hidden><canvas id="anChart" aria-label="Valid sites in each time window"></canvas><div class="an-axis"><span id="anChartA"></span><span>valid per window</span><span id="anChartB"></span></div></div>
+    <div class="an-status" id="anStatus">Choose a landing site in the mission parameters.</div>
     <div class="an-prog" id="anProg" hidden><i></i></div>
+    <div id="anFilter" class="an-filter" hidden>
+      <h3>Filtering</h3>
+      <div class="an-frow sun"><label for="fSun">Minimum sunlight duration</label><div><input type="range" id="fSun" min="0" max="100" step="1"><b id="fSunV"></b></div></div>
+      <div class="an-frow earth"><label for="fComm">Minimum direct-to-Earth duration</label><div><input type="range" id="fComm" min="0" max="100" step="1"><b id="fCommV"></b></div></div>
+      <div class="an-status" id="fStatus"></div>
+    </div>
+    <div id="repTray" class="rep-tray" hidden>
+      <h3>Report <span id="repN" class="dim"></span></h3>
+      <div id="repList" class="rep-list"></div>
+      <div class="dim rep-hint">To add sites: <b>Alt+click</b> a bar, use <b>+ Report</b> on the chip or card, or drag a card or a table row here.</div>
+      <button type="button" class="b rep-go" id="repGo" disabled>Create PDF report</button>
+      <div class="an-status" id="repStatus"></div>
+    </div>
     <div id="anFunnel"></div>
   </section>
   <h2>Where</h2><div class="read" id="rWhere">Globe view</div>
@@ -218,16 +330,16 @@ body.analyzing.local #right > :not(#anPanel){display:none !important}
   <select id="overlay" title="Overlay"><option value="none">No overlay</option><option value="sun">NASA avg Sun visibility</option><option value="earth">NASA avg Earth visibility</option><option value="layers">Data resolution</option></select>
   <select id="exag" title="Vertical exaggeration"><option value="1" selected>Relief ×1</option><option value="2">×2</option><option value="4">×4</option></select>
   <label class="tog"><input type="checkbox" id="shadows" checked>Cast shadows</label>
-  <label class="tog" title="Exposição em EV, como numa câmera. Suba para +12 a +14 para ver o lado noturno iluminado pela Terra.">Exposure <input type="range" id="expo" min="-3" max="14" step="0.5" value="0" style="width:90px"><span id="expoV" class="dim" style="font-family:var(--mono);min-width:26px">0</span> EV</label>
+  <label class="tog" title="Exposure in EV, like a camera. Raise it to +12…+14 to see the night side lit by Earthshine.">Exposure <input type="range" id="expo" min="-3" max="14" step="0.5" value="0" style="width:90px"><span id="expoV" class="dim" style="font-family:var(--mono);min-width:26px">0</span> EV</label>
 </div>
 <div id="status">Loading…</div>
-<script type="module" src="js/app.js?v=20261115d"></script>
+<script type="module" src="js/app.js?v=20261115g"></script>
 <script>
-  // Se o navegador carregou um app.js antigo (cache), o formulário nunca aparece: avisa em vez de ficar "Carregando…"
+  // If the browser loaded an old app.js (cache), the form never appears: warn instead of loading forever
   addEventListener('load', function () {
-    if (window.LUNITE_BUILD === '20261115d') return;
+    if (window.LUNITE_BUILD === '20261115g') return;
     var b = document.getElementById('mfBody');
-    if (b) b.innerHTML = '<div class="mf-err">Os arquivos JavaScript estão desatualizados (cache do navegador ou arquivos não substituídos). Recarregue com <b>Ctrl+Shift+R</b>. Se continuar, confira se a pasta <code>js/</code> tem <code>mission.js</code> e <code>analysis.js</code>.</div>';
+    if (b) b.innerHTML = '<div class="mf-err">The JavaScript files are out of date (browser cache or files not replaced). Reload with <b>Ctrl+Shift+R</b>. If it persists, check that the <code>js/</code> folder has <code>mission.js</code> and <code>analysis.js</code>.</div>';
   });
 </script>
 </body>
